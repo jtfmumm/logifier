@@ -18,7 +18,7 @@
 
 ;Basic operations
 (defn clear-model []
-         (reset! model {}))
+         (reset! model #{}))
 
 (defn insert-prop [prop value]
       (if (has-name? model prop) "Duplicate Entry"
@@ -30,8 +30,23 @@
       (do
           (swap! assertions conj {:name prop})
           (cond
-               (atom? prop) (insert-prop prop "true")
+               (atom? prop) (do
+                                          (insert-prop prop "true")
+                                          (recalc model))
                :else (decomp prop))))
+
+(list-names model)
+
+(affirm \a)
+(reveal model)
+(affirm \b)
+
+(defn recalc [this-model]
+      (loop [rest-props (list-names this-model)]
+            (cond
+                (empty? rest-props) "done"
+                :else (do (affirm (first rest-props))
+                               (recur [rest rest-props])))))
 
 (defn reveal [this-model]
       (deref this-model))
@@ -55,6 +70,13 @@
                                                  false)
        ))
 
+(defn list-names [model]
+    (map #(get % :name) (deref model)))
+
+(defn has-name? [this-map name]
+      (cond (= (filter #(= % name) (list-names this-map)) (list name)) true
+                :else false))
+
 
 ;Decompose
 (defn decomp [prop]
@@ -65,7 +87,6 @@
              (= operate "land") (do
                                                   (affirm (frest prop))
                                                   (affirm (frerest prop)))
-             ;(= operate "lcond") (affirm  (cons "lor" (cons (cons "lnot" (list (frest prop))) (list (frest (rest prop))))))
              (= operate "lcond") (affirm (vector "lor" (vector "lnot" (frest prop)) (frest (rest prop))))
              :else "ERROR"
              )))
@@ -85,9 +106,18 @@
       (cond
            (= (evaluate (first prop)) "false") (affirm (frest prop))
            (= (evaluate (frest prop)) "false") (affirm (first prop))
-          ;:else (insert-prop (cons "lor" (list prop)) "true")
           :else (insert-prop (vector "lor" (first prop) (frest prop)) "true")
        ))
+
+
+;Getting values
+(defn get-value [name]
+      (:value (first (filter #(= (:name %) name) (deref model)))))
+
+(defn find-value [this-map name]
+    (let [answer (get-value  name)]
+          (if (= answer nil) "unknown"
+               answer)))
 
 
 ;Evaluate
@@ -103,7 +133,7 @@
              (= operate "lor") (lor (rest prop))
              (= operate "land") (land (rest prop))
              (= operate "lcond") (lcond (rest prop))
-             :else "ERROR"
+             :else (list "ERROR: Invalid operator" prop)
              )))
 
 (defn lnot [prop]
@@ -139,47 +169,28 @@
                           ))
 
 
-;Getting values
-(defn get-value [name]
-      (:value (first (filter #(= (:name %) name) (deref model)))))
-
-(:value (first (filter #(= (:name %) \q) (deref model))))
-
-(defn has-name? [this-map name]
-      (cond (= (filter #(= % name) (list-names this-map)) (list name)) true
-              ;(get (deref this-map) :name) name) true
-                :else false))
-
-(get (deref model) :name)
-
-(defn list-names [model]
-    (map #(get % :name) (deref model)))
-
-(defn find-value [this-map name]
-    (let [answer (get-value  name)]
-          (if (= answer nil) "unknown"
-               answer)))
-
 
 ;Tests
-(reveal model)
-(affirm \a)
-(affirm ["lnot" \b])
-(evaluate \b)
-
-(affirm ["lnot" ["land" \c \d]])
-(affirm \d)
-(affirm ["land" ["lnot" \f] \g])
-(evaluate \f)
-(affirm ["lnot" ["lnot" ["lnot" \m]]])
-(affirm ["lcond" \o ["lnot" \p]])
-
-(affirm ["lor" ["lnot" \z] ["lnot" \y]])
-
-(evaluate ["lcond" \o ["lnot" \p]])
 
 
-(reveal model)
+
+;(affirm \a)
+;(affirm ["lnot" \b])
+;(evaluate \b)
+
+;(affirm ["lnot" ["land" \c \d]])
+;(affirm \d)
+;(affirm ["land" ["lnot" \f] \g])
+;(evaluate \f)
+;(affirm ["lnot" ["lnot" ["lnot" \m]]])
+;(affirm ["lcond" \o ["lnot" \p]])
+
+;(affirm ["lor" ["lnot" \z] ["lnot" \y]])
+
+;(evaluate ["lcond" \o ["lnot" \p]])
+
+
+;(reveal model)
 
 
 ;End tests
