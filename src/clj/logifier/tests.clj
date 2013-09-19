@@ -1,5 +1,11 @@
 (ns tests
-      (:use [logifier]))
+      (:use [logifier])
+    (:use [clojure.inspector :include (atom?)]))
+
+(list-names model)
+
+(affirm (clean-up \a) model)
+
 
 
 (clear-model model)
@@ -10,69 +16,73 @@
 (affirm ["lnot" \c] model)
 (affirm ["lnot" \d] model)
 
-(evaluate ["lnot" \a] model)
-(evaluate ["lor" \a \b] model)
-(evaluate ["land" \b \c] model)
-(evaluate ["lor" \d ["lnot" \c]] model)
-(evaluate ["lcond" \c \a] model)
+(list-names model)
+
+(evaluate ["lnot" \a] model) ;f
+(evaluate ["lor" \a \b] model) ;t
+(evaluate ["land" \b \c] model) ;f
+(evaluate ["lor" \d ["lnot" \c]] model) ;t
+(evaluate ["lcond" \c \a] model) ;t
 
 (affirm ["lor" \e \f] model)
 (affirm ["lcond" \g \h] model)
 (affirm ["lcond" ["lnot" \i] ["lnot" \j]] model)
-(evaluate ["lor" ["lnot" \g] \h] model)
-(evaluate ["lcond" \g \h] model)
-(evaluate ["lor" \f \e] model)
+
+(list-names model)
+
+(evaluate ["lor" ["lnot" \g] \h] model) ;t
+(evaluate ["lcond" \g \h] model) ;t
+(evaluate ["lor" \f \e] model) ;t
 (reveal model)
+
 (affirm ["lor" \c \m] model)
-(evaluate \m model)
-(reveal model)
+
+(list-names model)
+
+(evaluate \m model) ;t
 
 (affirm ["lnot" \f] model)
 (affirm ["lnot" \h] model)
 (affirm \j model)
+
 (list-names model)
-(reveal model)
+
+(evaluate \i model) ;t
+(evaluate \e model) ;t
+(evaluate \g model) ;f
+
+(clear-model model)
+
+(def x ["lor" ["lnot" ["lnot" \i]] ["lnot" \j]])
+
+(after ["lnot" \i] ["lnot" \j])
+
+(clean-up ["lor" ["lnot" \i] \j])
+(clean-up ["lcond" ["lnot" \j] \i])
+(clean-up ["lor" \j \i])
+(clean-up ["lnot" ["lcond" ["lnot" \j] \i]])
+
+
+(affirm ["lcond" ["lnot" ["land" \b \c]] \d] model)
 
 (affirm ["lor" ["lnot" ["lnot" \i]] ["lnot" \j]] model)
 
-(evaluate \i model)
-(evaluate \e model)
-(evaluate \g model)
-(evaluate \i model)
-
-(reveal model)
-
-(def x ["lor" ["lnot" \z] ["lnot" \k]])
-
-
-
-
-(defn oror [prop this-model]
-                      (cond
-                           (= (evaluate (first prop) this-model) "false") (affirm (frest prop) this-model)
-                           (= (evaluate (frest prop) this-model) "false") (affirm (first prop) this-model)
-                          :else (insert-prop (vector "lor" (first prop) (frest prop)) "true" this-model)
-                       ))
-
-(oror x model)
-
-(evaluate \w model)
-
-(affirm "hi" model)
-(affirm x model)
-
-(affirm \z model)
-
 (clear-model model)
-(affirm x model)
-(affirm \y model)
+(list-names model)
+(clean-up ["lbicond" \i \j])
+(evaluate ["lbicond" \i \j] model)
+(clean-up ["land" ["lor" ["lbicond" \i \j] \k] \m])
+
+(affirm ["lcond" ["lnot" ["lor" ["land" \i ["lor" \j \k]] ["lor" \a \b]]] \c] model)
+
+(affirm ["lnot" \i] model)
+(affirm ["land" ["lnot" \a] ["lnot" \b]] model)
+
+(evaluate \c model) ;t
 
 (list-names model)
-(reduce )
-
-(map #(affirm % model) (list-names model))
-
-
 
 (reveal model)
-(clear-model model)
+
+
+(negate \a)

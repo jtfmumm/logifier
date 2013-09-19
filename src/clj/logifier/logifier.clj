@@ -46,6 +46,61 @@
                                                  false)
        ))
 
+(defn negate [prop]
+      (if (and (not (atom? prop)) (= (first prop) "lnot"))
+                (frest prop)
+                (vector "lnot" prop)))
+
+(defn nest-compare [one two]
+      (compare (apply str (flatten one)) (apply str (flatten two))))
+
+(defn before [one two]
+      (cond
+           (and (atom? one) (not (atom? two))) one
+           (and (atom? two) (not (atom? one))) two
+           :else (first (sort nest-compare [one two]))))
+
+(defn after [one two]
+      (cond
+           (and (atom? one) (not (atom? two))) two
+           (and (atom? two) (not (atom? one))) one
+           :else (frest (sort nest-compare [one two]))))
+
+(defn clean-up [prop]
+      (letfn [(decomp [prop]
+                                (let [operate (first prop)]
+                                       (cond
+                                             (= operate "lnot") (decomp-lnot (frest prop))
+                                             (= operate "lor") (decomp-lor (vector (frest prop) (frerest prop)))
+                                             (= operate "land") (vector "land" (clean-up (frest prop)) (clean-up (frerest prop)))
+                                             (= operate "lcond") (vector "lor" (clean-up (negate (frest prop))) (clean-up (frerest prop)))
+                                             (= operate "lbicond") (decomp ["land"
+                                                                                                     ["lcond" (frest prop) (frerest prop)]
+                                                                                                     ["lcond" (frerest prop) (frest prop)]])
+                                             :else (list "ERROR: not a valid operator" prop)
+                                                 )))
+                (decomp-lnot [prop]
+                    (let [operate (or (atom? prop)(first prop))]
+                      (cond
+                             (atom? prop) (vector "lnot" prop)
+                             (= operate "lnot") (clean-up (frest prop))
+                             (= operate "lor") (decomp ["land" ["lnot" (frest prop)] ["lnot" (frerest prop)]])
+                             (= operate "land") (decomp ["lor" ["lnot" (frest prop)] ["lnot" (frerest prop)]])
+                             (= operate "lcond") (decomp ["land" (frest prop) ["lnot" (frerest prop)]])
+                             (= operate "lbicond") (decomp ["lor"
+                                                                                    ["lnot" ["lcond" (frest prop) (frerest prop)]]
+                                                                                    ["lnot" ["lcond" (frerest prop) (frest prop)]]])
+                             :else (list "decomp-lnot ERROR" prop)
+                           )))
+                (decomp-lor [prop]
+                      (vector "lor"
+                                         (clean-up (before (first prop) (frest prop)))
+                                         (clean-up (after (first prop) (frest prop)))))
+              ]
+        (if
+              (atom? prop) prop
+              (decomp prop))))
+
 
 ;Getting values
 (defn get-value [name this-model]
@@ -59,6 +114,7 @@
 
 ;Evaluate
 (defn evaluate [prop this-model]
+      (let [prop (clean-up prop)]
       (letfn [(evaluate-composite [prop]
                     (let [operate (first prop)]
                          (cond
@@ -66,6 +122,9 @@
                              (= operate "lor") (lor (rest prop))
                              (= operate "land") (land (rest prop))
                              (= operate "lcond") (lcond (rest prop))
+                             (= operate "lbicond") (land
+                                                                          [["lcond" (frest prop) (frerest prop)]
+                                                                          ["lcond" (frerest prop) (frest prop)]])
                              :else (list "ERROR: Invalid operator" prop)
                              )))
                 (lnot [prop]
@@ -102,42 +161,32 @@
               ]
       (cond
          (atom? prop) (find-value prop this-model)
-         :else (evaluate-composite prop))))
+         :else (evaluate-composite prop)))))
 
 
 ;Affirm
-(defn insert-prop [prop value this-model]
-      (letfn [(recalc []
-                      (map #(affirm % model) (list-names this-model)))]
-      (if (has-name? prop this-model) "Duplicate Entry"
-           (if
-               (wff? prop) (do
+;Be sure to always clean-up initial props before affirming them!
+(defn affirm [prop this-model]
+      (let [prop (clean-up prop)]
+      (letfn [(insert-prop [prop value this-model]
+                      (letfn [(recalc []
+                                      (map #(affirm % model) (list-names this-model)))]
+                      (if (has-name? prop this-model) "Duplicate Entry"
+                           (if
+                               (wff? prop) (do
                                        (swap! this-model conj {:name prop :value value})
                                        (recalc))
-               (list "ERROR: Not a well-formed formula:" prop)))))
-
-(defn affirm [prop this-model]
-      (letfn [(decomp [prop]
+                           (list "ERROR: Not a well-formed formula:" prop)))))
+                 (decomp [prop]
                                 (let [operate (first prop)]
                                        (cond
-                                             (= operate "lnot") (decomp-lnot (frest prop))
+                                             (= operate "lnot") (insert-prop (frest prop) "false" this-model)
                                              (= operate "lor") (decomp-lor (vector (frest prop) (frerest prop)))
                                              (= operate "land") (do
                                                                                 (affirm (frest prop) this-model)
                                                                                 (affirm (frerest prop) this-model))
-                                             (= operate "lcond") (affirm (vector "lor" (vector "lnot" (frest prop)) (frest (rest prop))) this-model)
                                              :else (list "ERROR: not a valid operator" prop)
                                                  )))
-                (decomp-lnot [prop]
-                    (let [operate (or (atom? prop)(first prop))]
-                      (cond
-                             (atom? prop) (insert-prop prop "false" this-model)
-                             (= operate "lnot") (affirm (frest prop) this-model)
-                             (= operate "lor") (decomp ["land" ["lnot" (frest prop)] ["lnot" (frerest prop)]])
-                             (= operate "land") (decomp ["lor" ["lnot" (frest prop)] ["lnot" (frerest prop)]])
-                             (= operate "lcond") (decomp ["land" (frest prop)] ["lnot" (frerest prop)])
-                             :else (list "decomp-lnot ERROR" prop)
-                           )))
                 (decomp-lor [prop]
                       (cond
                            (= (evaluate (first prop) this-model) "false") (affirm (frest prop) this-model)
@@ -149,7 +198,7 @@
           (swap! assertions conj {:name prop})
           (cond
                (atom? prop) (insert-prop prop "true" this-model)
-               :else (decomp prop)))))
+               :else (decomp prop))))))
 
 (defn reveal [this-model]
       (deref this-model))
