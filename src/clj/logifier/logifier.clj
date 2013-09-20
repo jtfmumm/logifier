@@ -13,6 +13,8 @@
 ;Set up our model
 (def model (atom #{}))
 
+(def arg-model (atom #{}))
+
 (def assertions (atom #{}))
 
 
@@ -66,6 +68,27 @@
            (and (atom? two) (not (atom? one))) one
            :else (frest (sort nest-compare [one two]))))
 
+(defn str->vector [expr]
+      )
+
+(defn prefixer [expr]
+      (cond
+           (atom? expr) expr
+           (= (count expr) 2)
+                   (if
+                         (or (= (first expr) "~") (= (first expr) "-")) (vector "lnot" (prefixer (frest expr)))
+                         (list "ERROR: Not a valid operator:" expr))
+           (= (count expr) 3)
+                  (let [[left op right] expr]
+                   (cond
+                        (= op "v") (vector "lor" (prefixer left) (prefixer right))
+                        (or (= op "&") (= op "+")) (vector "land" (prefixer left) (prefixer right))
+                        (= op ">") (vector "lcond" (prefixer left) (prefixer right))
+                        (= op "<>") (vector "lbicond" (prefixer left) (prefixer right))
+                        :else (list "ERROR: Not a valid operator:" expr)
+           :else (list "ERROR: Invalid syntax:" expr)
+                         ))))
+
 (defn clean-up [prop]
       (letfn [(decomp [prop]
                                 (let [operate (first prop)]
@@ -73,7 +96,7 @@
                                              (= operate "lnot") (decomp-lnot (frest prop))
                                              (= operate "lor") (decomp-lor (vector (frest prop) (frerest prop)))
                                              (= operate "land") (vector "land" (clean-up (frest prop)) (clean-up (frerest prop)))
-                                             (= operate "lcond") (vector "lor" (clean-up (negate (frest prop))) (clean-up (frerest prop)))
+                                             (= operate "lcond") (decomp (vector "lor" (clean-up (negate (frest prop))) (clean-up (frerest prop))))
                                              (= operate "lbicond") (decomp ["land"
                                                                                                      ["lcond" (frest prop) (frerest prop)]
                                                                                                      ["lcond" (frerest prop) (frest prop)]])
@@ -163,6 +186,7 @@
          (atom? prop) (find-value prop this-model)
          :else (evaluate-composite prop)))))
 
+(if-not (= 3 3) 9 7)
 
 ;Affirm
 ;Be sure to always clean-up initial props before affirming them!
@@ -170,7 +194,10 @@
       (let [prop (clean-up prop)]
       (letfn [(insert-prop [prop value this-model]
                       (letfn [(recalc []
-                                      (map #(affirm % model) (list-names this-model)))]
+                            (loop [initial-state (deref this-model)]
+                                     (do
+                                           (doseq [props (list-names this-model)] (affirm props this-model))
+                                           (if-not (= initial-state (deref this-model)) (recur (deref this-model))))))]
                       (if (has-name? prop this-model) "Duplicate Entry"
                            (if
                                (wff? prop) (do
@@ -200,11 +227,25 @@
                (atom? prop) (insert-prop prop "true" this-model)
                :else (decomp prop))))))
 
+(defn recalculate [this-model]
+        (loop [initial-state (deref this-model)]
+                 (do
+                       (doseq [props (list-names this-model)] (affirm props this-model))
+                       (if-not (= initial-state (deref this-model)) (recur (deref this-model))))))
+
 (defn reveal [this-model]
       (deref this-model))
 
 
+;VALIDITY/SOUNDNESS
+(defn check-validity [conclusion premises]
+      (do
+          (clear-model arg-model)
+          (doseq [props premises] (affirm props arg-model))
+          (if (= (evaluate conclusion arg-model) "true") "true" "false")))
 
-
-
-
+(defn check-soundness [conclusion premises this-model]
+      (do
+          (if (= (check-validity conclusion premises) "true")
+                (if (every? #(= (evaluate % this-model) "true") premises) "true" "false")
+                "false")))
