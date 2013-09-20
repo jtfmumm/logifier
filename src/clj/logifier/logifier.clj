@@ -1,6 +1,7 @@
 (ns logifier
-      (:use [clojure.inspector :include (atom?)]))
-
+      (:require [clojure.string :as str])
+      (:use [clojure.inspector :include (atom?)]
+               [clojure.string :only (split triml grep)]))
 
 ;Utilities
 (defn frest [x]
@@ -186,7 +187,6 @@
          (atom? prop) (find-value prop this-model)
          :else (evaluate-composite prop)))))
 
-(if-not (= 3 3) 9 7)
 
 ;Affirm
 ;Be sure to always clean-up initial props before affirming them!
@@ -249,3 +249,23 @@
           (if (= (check-validity conclusion premises) "true")
                 (if (every? #(= (evaluate % this-model) "true") premises) "true" "false")
                 "false")))
+
+(split "Hi there" #"\s+")
+
+(def x "(p & r) <> ((l v b) > n)")
+x
+ (str/replace x #"v" "lor")
+ (str/replace x #"([.])" "")
+ (str/replace "Hi" #"i" "j")
+
+
+(def brackets (rep* (conc (lit \()
+                                 brackets
+                                 (lit \)))))
+
+(defn run-p2
+         [parser input]
+         (rule-match parser
+                     #(prn "fail:" %&)
+                     #(prn "incomplete:" %&)
+                     {:remainder input}))

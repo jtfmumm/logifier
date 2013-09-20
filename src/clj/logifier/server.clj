@@ -9,8 +9,6 @@
 
 
 ;TODO
-;Recalculate cycle
-;Check for validity
 ;Parse input
 
 
@@ -22,11 +20,16 @@
 (defn frerest [x]
       (frest (rest x)))
 
+(defn exclusive-or [a b]
+      (or
+           (and a (not b))
+           (and b (not a))))
+
 
 ;Set up our model
 (def model (atom #{}))
 
-(def arg-model (atom #{}))
+(def test-model (atom #{}))
 
 (def assertions (atom #{}))
 
@@ -149,6 +152,28 @@
 
 
 ;Evaluate
+(defn tautology? [orig-prop]
+      (if (atom? orig-prop) false
+      (let [prop (clean-up orig-prop)
+              one (frest prop)
+              two (frerest prop)]
+            (if (= (first prop) "lor")
+                  (or
+                         (= (negate one) two)
+                         (= (negate two) one))
+                 false))))
+
+(defn contradiction? [orig-prop]
+      (if (atom? orig-prop) false
+      (let [prop (clean-up orig-prop)
+              one (frest prop)
+              two (frerest prop)]
+            (if (= (first prop) "land")
+                  (or
+                         (= (negate one) two)
+                         (= (negate two) one))
+                 false))))
+
 (defn evaluate [prop this-model]
       (let [prop (clean-up prop)]
       (letfn [(evaluate-composite [prop]
@@ -196,15 +221,31 @@
                                           ))
               ]
       (cond
+         (tautology? prop) "true"
+         (contradiction? prop) "false"
          (atom? prop) (find-value prop this-model)
          :else (evaluate-composite prop)))))
 
 
 ;Affirm
+
+
 ;Be sure to always clean-up initial props before affirming them!
 (defn affirm [prop this-model]
       (let [prop (clean-up prop)]
-      (letfn [(insert-prop [prop value this-model]
+      (letfn [(inconsistent? [prop]
+                       (cond
+                            (= (evaluate prop this-model) "false") true
+                            (contradiction? prop) true
+                            (and (not (atom? prop)) (= (first prop) "land"))
+                                     (do
+                                           (reset! test-model (deref this-model))
+                                           (if (= (evaluate (frest prop) test-model) "false") true
+                                                (do
+                                                       (affirm (frest prop) test-model)
+                                                       (= (evaluate (frerest prop) test-model) "false"))))
+                            :else false))
+                 (insert-prop [prop value this-model]
                       (letfn [(recalc []
                             (loop [initial-state (deref this-model)]
                                      (do
@@ -233,11 +274,12 @@
                           :else (insert-prop (vector "lor" (first prop) (frest prop)) "true" this-model)
                        ))
               ]
+      (if (inconsistent? prop) "inconsistent"
       (do
           (swap! assertions conj {:name prop})
           (cond
                (atom? prop) (insert-prop prop "true" this-model)
-               :else (decomp prop))))))
+               :else (decomp prop)))))))
 
 (defn recalculate [this-model]
         (loop [initial-state (deref this-model)]
@@ -252,9 +294,9 @@
 ;VALIDITY/SOUNDNESS
 (defn check-validity [conclusion premises]
       (do
-          (clear-model arg-model)
-          (doseq [props premises] (affirm props arg-model))
-          (if (= (evaluate conclusion arg-model) "true") "true" "false")))
+          (clear-model test-model)
+          (doseq [props premises] (affirm props test-model))
+          (if (= (evaluate conclusion test-model) "true") "true" "false")))
 
 (defn check-soundness [conclusion premises this-model]
       (do
