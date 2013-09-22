@@ -10,11 +10,22 @@
 (defn frerest [x]
       (frest (rest x)))
 
+(defn exclusive-or [a b]
+      (or
+           (and a (not b))
+           (and b (not a))))
+
+(defn str-length [string]
+      (loop [remains string
+                 count 0]
+                (if (= remains "") count
+                      (recur (subs remains 1) (+ count 1)))))
+
 
 ;Set up our model
 (def model (atom #{}))
 
-(def arg-model (atom #{}))
+(def test-model (atom #{}))
 
 (def assertions (atom #{}))
 
@@ -35,7 +46,8 @@
            (= input "lnot")
            (= input "lor")
            (= input "land")
-           (= input "lcond")))
+           (= input "lcond")
+           (= input "lbicond")))
 
 (defn wff? [prop]
       (cond
@@ -68,27 +80,6 @@
            (and (atom? one) (not (atom? two))) two
            (and (atom? two) (not (atom? one))) one
            :else (frest (sort nest-compare [one two]))))
-
-(defn str->vector [expr]
-      )
-
-(defn prefixer [expr]
-      (cond
-           (atom? expr) expr
-           (= (count expr) 2)
-                   (if
-                         (or (= (first expr) "~") (= (first expr) "-")) (vector "lnot" (prefixer (frest expr)))
-                         (list "ERROR: Not a valid operator:" expr))
-           (= (count expr) 3)
-                  (let [[left op right] expr]
-                   (cond
-                        (= op "v") (vector "lor" (prefixer left) (prefixer right))
-                        (or (= op "&") (= op "+")) (vector "land" (prefixer left) (prefixer right))
-                        (= op ">") (vector "lcond" (prefixer left) (prefixer right))
-                        (= op "<>") (vector "lbicond" (prefixer left) (prefixer right))
-                        :else (list "ERROR: Not a valid operator:" expr)
-           :else (list "ERROR: Invalid syntax:" expr)
-                         ))))
 
 (defn clean-up [prop]
       (letfn [(decomp [prop]
@@ -126,6 +117,92 @@
               (decomp prop))))
 
 
+;Parsing input
+(defn prefixer [expr]
+      (cond
+           (atom? expr) expr
+           (= (count expr) 1)
+                   (vector "lnot" (prefixer (frest (first expr))))
+           (= (count expr) 2)
+                   (vector "lnot" (prefixer (frest expr)))
+           (= (count expr) 3)
+                   (let [[left op right] expr]
+                         (vector op (prefixer left) (prefixer right)))))
+
+(defn count-next-parens [input]
+       (loop [remains input
+                 parens 0
+                 count 0]
+                 (cond
+                      (= (first remains) \))
+                              (if (= parens 1)
+                                    (+ count 1)
+                                    (recur (subs remains 1) (- parens 1) (+ count 1)))
+                      (= (first remains) \()
+                                    (recur (subs remains 1) (+ parens 1) (+ count 1))
+                      :else (recur (subs remains 1) parens (+ count 1)))))
+
+ (defn clean-parse [input]
+       (loop [output []
+                  remains input]
+                  (cond
+                       (= (first remains) nil) output
+                       (= (first remains) \space) (recur output (subs remains 1))
+                       (= (first remains) \v) (recur (conj output "lor") (subs remains 1))
+                       (= (first remains) \&) (recur (conj output "land") (subs remains 1) )
+                       (= (first remains) \>) (recur (conj output "lcond") (subs remains 1))
+                       (= (first remains) \<) (recur (conj output "lbicond") (subs remains 2))
+                       (or (= (first remains) \~) (= (first remains) \-))
+                               (if (= (subs remains 1 2) "(")
+                                     (recur
+                                          (conj output (vector "lnot" (subs remains 1 (count-next-parens (subs remains 0)))))
+                                          (subs remains (count-next-parens remains)))
+                                     (recur
+                                          (conj output (vector "lnot" (first (subs remains 1))))
+                                          (subs remains 2)))
+                       (= (first remains) \() (recur (conj output (subs remains 0 (count-next-parens remains))) (subs remains (count-next-parens remains)))
+                       (= (type (first remains)) java.lang.Character) (recur (conj output (first remains)) (subs remains 1))
+                       :else (str/join (list "ERROR: something's amiss with input: " input))
+ )))
+
+ (defn vectorize [input]
+      (if (= (first input) \()
+      (loop [output []
+                 remains input
+                 count 0]
+                 (cond
+                      (= (first remains) \))
+                              (if (= count 1)
+                                    (str/join output)
+                                    (recur (conj output \)) (subs remains 1) (- count 1)))
+                      (= (first remains) \()
+                              (if (= count 0)
+                                    (recur [] (subs remains 1) 1)
+                                    (recur (conj output (first remains)) (subs remains 1) (+ count 1)))
+                      :else (recur (conj output (first remains)) (subs remains 1) count)))
+        input))
+
+(defn nest-parse [input]
+   (if (= (str-length input) 1) (first input)
+      (let [input (clean-parse input)]
+          ; (if (= (count input) 1) )
+      (letfn [(parse [input]
+                     ;(let [input (first (clean-parse input))]
+                      (cond (= (type input) java.lang.Character) input
+                                (= (type input) clojure.lang.PersistentVector) (into [] (map #(parse %) input))
+                                (= (type input) java.lang.String) (if
+                                                                                        (= (first input) \() (nest-parse (vectorize input))
+                                                                                                                     input)))]
+                (into [] (map #(parse %) input))))))
+
+(defn parse-prop [prop]
+      (prefixer (nest-parse prop)))
+
+;Must take a quoted list or vector as input
+(defn parse-prop-seq [props]
+      (map #(parse-prop %) props))
+
+
 ;Getting values
 (defn get-value [name this-model]
       (:value (first (filter #(= (:name %) name) (deref this-model)))))
@@ -137,6 +214,28 @@
 
 
 ;Evaluate
+(defn tautology? [orig-prop]
+      (if (atom? orig-prop) false
+      (let [prop (clean-up orig-prop)
+              one (frest prop)
+              two (frerest prop)]
+            (if (= (first prop) "lor")
+                  (or
+                         (= (negate one) two)
+                         (= (negate two) one))
+                 false))))
+
+(defn contradiction? [orig-prop]
+      (if (atom? orig-prop) false
+      (let [prop (clean-up orig-prop)
+              one (frest prop)
+              two (frerest prop)]
+            (if (= (first prop) "land")
+                  (or
+                         (= (negate one) two)
+                         (= (negate two) one))
+                 false))))
+
 (defn evaluate [prop this-model]
       (let [prop (clean-up prop)]
       (letfn [(evaluate-composite [prop]
@@ -184,15 +283,31 @@
                                           ))
               ]
       (cond
+         (tautology? prop) "true"
+         (contradiction? prop) "false"
          (atom? prop) (find-value prop this-model)
          :else (evaluate-composite prop)))))
 
 
 ;Affirm
+
+
 ;Be sure to always clean-up initial props before affirming them!
 (defn affirm [prop this-model]
       (let [prop (clean-up prop)]
-      (letfn [(insert-prop [prop value this-model]
+      (letfn [(inconsistent? [prop]
+                       (cond
+                            (= (evaluate prop this-model) "false") true
+                            (contradiction? prop) true
+                            (and (not (atom? prop)) (= (first prop) "land"))
+                                     (do
+                                           (reset! test-model (deref this-model))
+                                           (if (= (evaluate (frest prop) test-model) "false") true
+                                                (do
+                                                       (affirm (frest prop) test-model)
+                                                       (= (evaluate (frerest prop) test-model) "false"))))
+                            :else false))
+                 (insert-prop [prop value this-model]
                       (letfn [(recalc []
                             (loop [initial-state (deref this-model)]
                                      (do
@@ -221,9 +336,8 @@
                           :else (insert-prop (vector "lor" (first prop) (frest prop)) "true" this-model)
                        ))
               ]
-      (do
-          (swap! assertions conj {:name prop})
-          (cond
+      (if (inconsistent? prop) "inconsistent"
+           (cond
                (atom? prop) (insert-prop prop "true" this-model)
                :else (decomp prop))))))
 
@@ -238,34 +352,59 @@
 
 
 ;VALIDITY/SOUNDNESS
-(defn check-validity [conclusion premises]
+(defn valid? [conclusion premises]
       (do
-          (clear-model arg-model)
-          (doseq [props premises] (affirm props arg-model))
-          (if (= (evaluate conclusion arg-model) "true") "true" "false")))
+          (clear-model test-model)
+          (doseq [props premises] (affirm props test-model))
+          (if (= (evaluate conclusion test-model) "true") true false)))
 
-(defn check-soundness [conclusion premises this-model]
+(defn sound? [conclusion premises this-model]
       (do
-          (if (= (check-validity conclusion premises) "true")
-                (if (every? #(= (evaluate % this-model) "true") premises) "true" "false")
-                "false")))
-
-(split "Hi there" #"\s+")
-
-(def x "(p & r) <> ((l v b) > n)")
-x
- (str/replace x #"v" "lor")
- (str/replace x #"([.])" "")
- (str/replace "Hi" #"i" "j")
+          (if (valid? conclusion premises)
+                (if (every? #(= (evaluate % this-model) "true") premises) true false)
+                false)))
 
 
-(def brackets (rep* (conc (lit \()
-                                 brackets
-                                 (lit \)))))
+;INTERFACE
+(defn assert-prop [prop]
+      (let [parsed-prop (parse-prop prop)]
+            (if (wff? parsed-prop)
+                  (do
+                        (swap! assertions conj prop)
+                        (affirm parsed-prop model))
+                  "syntax error")))
 
-(defn run-p2
-         [parser input]
-         (rule-match parser
-                     #(prn "fail:" %&)
-                     #(prn "incomplete:" %&)
-                     {:remainder input}))
+(defn remove-assertion [prop]
+      (do
+          (reset! assertions
+              (filter #(not (= % prop)) (list-assertions)))
+          (reassert-props)))
+
+(defn reassert-props []
+     (do
+         (clear-model model)
+         (doseq [props (deref assertions)] (assert-prop props))))
+
+(defn list-assertions []
+     (into () (deref assertions)))
+
+(defn reset-assertions []
+     (clear-model assertions))
+
+(defn check-truth [prop]
+      (let [prop (parse-prop prop)]
+            (if (wff? prop) (evaluate prop model)
+                  "syntax error")))
+
+;arguments parameter must be quoted list or vector
+(defn check-validity [conclusion arguments]
+      (valid? (parse-prop conclusion)
+                   (parse-prop-seq arguments)))
+
+;arguments parameter must be quoted list or vector
+(defn check-soundness [conclusion arguments]
+      (sound? (parse-prop conclusion)
+                    (parse-prop-seq arguments)
+                    model))
+
+

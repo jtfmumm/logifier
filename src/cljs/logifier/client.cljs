@@ -2,6 +2,8 @@
       (:use [jayq.core :only [$]])
     (:require [jayq.core :as jq]))
 
+(jq/focus ($ :#input))
+
 (def $colorchange ($ :#colorchange))
 
 (defn addstuff []
@@ -9,4 +11,4 @@
 
 (jq/bind ($ :#colorchange) :click addstuff)
 
-(jq/bind ($ :#clickhere) :click (fn [evt] (js/alert "Clicked!!")))
+(jq/bind ($ :#colorchange) :click (fn [evt] (js/alert "Clicked!!")))
