@@ -1,3 +1,4 @@
+
 (ns logifier.server
   (:require
             [compojure.handler :as handler]
@@ -147,6 +148,8 @@
                  parens 0
                  count 0]
                  (cond
+                      ;Make sure parens are balanced
+                      (and (= (str-length remains) 1) (> parens 1)) nil
                       (= (first remains) \))
                               (if (= parens 1)
                                     (+ count 1)
@@ -206,8 +209,115 @@
                                                                                                                      input)))]
                 (into [] (map #(parse %) input))))))
 
+
+;Input Validation
+(defn binary-operator? [character]
+      (if (= character nil) false
+          (boolean (re-find #"[><&v]" character)
+               )))
+
+(defn negate-operator? [character]
+      (or (= character "~")
+            (= character "-")))
+
+(defn input-operator? [character]
+      (or (binary-operator? character)
+            (negate-operator? character)))
+
+(defn next-char [prop]
+      (if (= (str-length prop) 1) nil
+          (let [length (str-length prop)]
+          (loop [next-one (subs prop 1 2)
+                 count 1]
+                (cond
+                     (= next-one " ")
+                         (if (< count length) (recur (subs prop count (+ count 1))(+ count 1))
+                              nil)
+                    :else next-one)
+             ))))
+
+(defn atomic-prop? [prop]
+      (boolean (re-find #"(?=[^v])[a-z]" prop)))
+
+(defn balanced-parens? [prop]
+      (boolean (count-next-parens prop)))
+
+(defn reformat-prop [prop]
+      (if (or (= prop "") (= prop nil)) "invalid syntax"
+        (loop [output []
+                 remains prop]
+        (let [this-one (subs remains 0 1)]
+           (cond
+               (= (str-length remains) 1) (str/trim (str/join (conj output this-one)))
+               (= this-one " ") (recur output (subs remains 1))
+               (atomic-prop? this-one)
+                    (if (= (next-char remains) ")") (recur (conj output this-one) (subs remains 1))
+                          (recur (conj output this-one " ") (subs remains 1)))
+               (binary-operator? this-one)
+                    (if (= this-one "<") (recur (conj output this-one "> ") (subs remains 2))
+                        (recur (conj output this-one " ") (subs remains 1)))
+               (negate-operator? this-one) (recur (conj output this-one) (subs remains 1))
+               (= this-one "(") (recur (conj output this-one) (subs remains 1))
+               (= this-one ")")
+                    (if (= (next-char remains) ")") (recur (conj output this-one) (subs remains 1))
+                           (recur (conj output this-one " ") (subs remains 1))))))))
+
+(defn valid-input? [prop]
+      (loop [remains prop]
+          (let [this-one (subs remains 0 1)
+                  next-one (next-char remains)]
+            (cond
+                 (= this-one " ") (recur (subs remains 1))
+                 (= (str-length remains) 1)
+                     (if (or (= next-one nil)
+                               (atomic-prop? remains))
+                          true
+                          false)
+                 (atomic-prop? this-one)
+                     (cond
+                         (= next-one nil) true
+                         (binary-operator? next-one) (recur (subs remains 1))
+                         :else false)
+                 (binary-operator? this-one)
+                     (if (or (atomic-prop? next-one)
+                                (negate-operator? next-one)
+                                (= next-one "("))
+                          (recur (subs remains 1))
+                          (if (= next-one ">") (recur (subs remains 2))
+                              false))
+                 (negate-operator? this-one)
+                     (if (or (atomic-prop? next-one)
+                                (= next-one "("))
+                          (recur (subs remains 1))
+                          false)
+                 (= this-one "(")
+                     ;Check to see that parens are balanced
+                     (if (balanced-parens? remains)
+                         (if (valid-input? (reformat-prop (subs remains 1 (- (count-next-parens remains) 1))))
+                               (if (< (count-next-parens remains) (str-length remains))
+                                  ;Replace parens-enclosed statement with an atomic proposition for testing purposes
+                                  (recur (str/join (concat "p" (subs remains (count-next-parens remains)))))
+                                  true)
+                              false)
+                          false)
+                 :else false))))
+
 (defn parse-prop [prop]
-      (prefixer (nest-parse prop)))
+      (let [prop (reformat-prop prop)]
+          (if (= (first prop) \() (parse-prop (subs prop 1 (- (str-length prop) 1)))
+              (if (valid-input? prop)
+                  (prefixer (nest-parse prop))))))
+
+(first "(p v q)")
+(parse-prop "(p v q) &&")
+(reformat-prop "(p & ~ (q v l)) v r")
+(parse-prop "~    (q <> r)")
+(parse-prop "(p v r)")
+(reformat-prop " (p v r)")
+(parse-prop (subs "(p v r)" 1 (- (str-length "(p v r)") 1)))
+(prefixer (nest-parse (reformat-prop "~  (q <> r)")))
+(nest-parse (reformat-prop "( p v r)"))
+(valid-input? (reformat-prop "~  (q > r)"))
 
 ;Must take a quoted list or vector as input
 (defn parse-prop-seq [props]
@@ -383,7 +493,7 @@
             (if (wff? parsed-prop)
                   (if-not (= (evaluate parsed-prop model) "false")
                       (do
-                            (swap! assertions conj prop)
+                            (swap! assertions conj (reformat-prop prop))
                             (affirm parsed-prop model))
                       (update-output "inconsistent"))
                   "syntax error")))
