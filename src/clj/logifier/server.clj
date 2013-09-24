@@ -6,13 +6,13 @@
             [ring.util.response :as response]
             [clojure.string :as str])
   (:use [hiccup.core]
+           [hiccup.page :only (include-css)]
            [compojure.core]
            [clojure.inspector :include (atom?)]))
 
 ;TODO
 ;Get JS working on app
-;Focus on textbox
-;Improve checker for wffs
+;Get "already asserted" condition to work right
 
 ;LOGIC
 ;Utilities
@@ -32,6 +32,10 @@
                  count 0]
                 (if (= remains "") count
                       (recur (subs remains 1) (+ count 1)))))
+
+(defn joincat [& input]
+      [input (list input)]
+      (str/join (concat input)))
 
 
 ;Set up our model
@@ -65,6 +69,7 @@
 
 (defn wff? [prop]
       (cond
+           (= prop nil) false
            (atom? prop) true
            (not (vector? prop)) false
            (= (first prop) "lnot") (if
@@ -149,6 +154,7 @@
                  count 0]
                  (cond
                       ;Make sure parens are balanced
+                      (and (= (str-length remains) 1) (not (= (first remains) \)))) nil
                       (and (= (str-length remains) 1) (> parens 1)) nil
                       (= (first remains) \))
                               (if (= parens 1)
@@ -237,13 +243,22 @@
              ))))
 
 (defn atomic-prop? [prop]
-      (boolean (re-find #"(?=[^v])[a-z]" prop)))
+      (if (= prop nil) false
+      (boolean (re-find #"(?=[^v])[a-z]" prop))))
 
 (defn balanced-parens? [prop]
       (boolean (count-next-parens prop)))
 
+(defn open-parens? [char]
+      (or (= char "(") (= char \()))
+
+(defn close-parens? [char]
+      (or (= char ")") (= char \))))
+
 (defn reformat-prop [prop]
       (if (or (= prop "") (= prop nil)) "invalid syntax"
+      (let [prop (str/trim prop)]
+      (if (= (first prop) \() (reformat-prop (subs prop 1 (- (str-length prop) 1)))
         (loop [output []
                  remains prop]
         (let [this-one (subs remains 0 1)]
@@ -260,7 +275,7 @@
                (= this-one "(") (recur (conj output this-one) (subs remains 1))
                (= this-one ")")
                     (if (= (next-char remains) ")") (recur (conj output this-one) (subs remains 1))
-                           (recur (conj output this-one " ") (subs remains 1))))))))
+                           (recur (conj output this-one " ") (subs remains 1))))))))))
 
 (defn valid-input? [prop]
       (loop [remains prop]
@@ -269,10 +284,13 @@
             (cond
                  (= this-one " ") (recur (subs remains 1))
                  (= (str-length remains) 1)
-                     (if (or (= next-one nil)
+                     (cond
+                          (input-operator? remains) false
+                          (open-parens? remains) false
+                          (or (= next-one nil)
                                (atomic-prop? remains))
-                          true
-                          false)
+                              true
+                          :else false)
                  (atomic-prop? this-one)
                      (cond
                          (= next-one nil) true
@@ -308,16 +326,6 @@
               (if (valid-input? prop)
                   (prefixer (nest-parse prop))))))
 
-(first "(p v q)")
-(parse-prop "(p v q) &&")
-(reformat-prop "(p & ~ (q v l)) v r")
-(parse-prop "~    (q <> r)")
-(parse-prop "(p v r)")
-(reformat-prop " (p v r)")
-(parse-prop (subs "(p v r)" 1 (- (str-length "(p v r)") 1)))
-(prefixer (nest-parse (reformat-prop "~  (q <> r)")))
-(nest-parse (reformat-prop "( p v r)"))
-(valid-input? (reformat-prop "~  (q > r)"))
 
 ;Must take a quoted list or vector as input
 (defn parse-prop-seq [props]
@@ -409,6 +417,23 @@
          (atom? prop) (find-value prop this-model)
          :else (evaluate-composite prop)))))
 
+(defn list-reversed-symbols [input]
+    (if (and (= (count input) 1)
+                 (= (evaluate (first input) model) "false")) (list-reversed-symbols (conj ["lnot"] input))
+    (let [input (flatten input)]
+    (loop [output []
+               remains input
+               binary-count 0]
+      (cond
+         (= (first remains) nil) (str/join (flatten (conj output (repeat binary-count "()"))))
+         (= (first remains) "lnot") (recur (conj output "~") (rest remains) binary-count)
+         (= (first remains) "lor") (recur (conj output "v") (rest remains) (+ binary-count 1))
+         (= (first remains) "land") (recur (conj output "&") (rest remains) (+ binary-count 1))
+         (= (first remains) "lcond") (recur (conj output ">") (rest remains) (+ binary-count 1))
+         (= (type (first remains)) java.lang.Character) (recur (conj output (str (first remains))) (rest remains) binary-count)
+         :else (recur (conj output (first remains)) (rest remains) binary-count)
+         )))))
+
 
 ;Affirming
 ;Be sure to always clean-up initial props before affirming them!
@@ -485,21 +510,37 @@
 
 
 ;INTERFACE
+(defn list-states []
+    (let [states (filter #(= (type %) java.lang.Character) (list-names model))
+            true-states (map #(str %) (filter #(= (evaluate % model) "true") states))
+            false-states (map #(str "~" %) (filter #(= (evaluate % model) "false") states))]
+          (str/join " . " (sort compare (flatten (conj true-states false-states))))
+      ))
+
 (defn update-output [output]
       (reset! current-output output))
 
+(defn asserted? [prop]
+      (or (= (filter #(= % prop) (deref assertions)) (list prop))
+            (= (filter #(= % (joincat "(" prop ")")) (deref assertions)) (list prop))))
+
 (defn assert-prop [prop]
-      (let [parsed-prop (parse-prop prop)]
+      (if (= (type prop) java.lang.Character) (assert-prop (str prop))
+      (let [prop (reformat-prop prop)
+              parsed-prop (parse-prop prop)]
             (if (wff? parsed-prop)
                   (if-not (= (evaluate parsed-prop model) "false")
-                      (do
-                            (swap! assertions conj (reformat-prop prop))
-                            (affirm parsed-prop model))
-                      (update-output "inconsistent"))
-                  "syntax error")))
+                     (if (asserted? prop) (update-output (joincat "[" prop "] already asserted!"))
+                         (do
+                               (if (= (str-length prop) 1) (swap! assertions conj prop)
+                                    (swap! assertions conj (joincat "(" prop ")")))
+                                (affirm parsed-prop model)
+                                (update-output (joincat "[" prop "] asserted"))))
+                      (update-output (joincat "[" prop "] inconsistent")))
+                  (update-output (joincat "[" prop "] " "syntax error"))))))
 
-(defn list-assertions []
-     (str/join " " (into () (deref assertions))))
+(defn print-assertions []
+     (str/join " . " (into () (deref assertions))))
 
 (defn reassert-props []
      (do
@@ -507,18 +548,23 @@
          (doseq [props (deref assertions)] (assert-prop props))))
 
 (defn remove-assertion [prop]
+      (if-not (asserted? prop) (update-output (joincat "[" prop "] hasn't been asserted"))
+      (let [prop (reformat-prop prop)]
       (do
           (reset! assertions
-              (filter #(not (= % prop)) (list-assertions)))
-          (reassert-props)))
+              (filter #(not (= % prop)) (deref assertions)))
+          (reassert-props)
+          (update-output (joincat "[" prop "] removed"))))))
 
 (defn reset-assertions []
+     (clear-model model)
      (clear-model assertions))
 
 (defn check-truth [prop]
-      (let [prop (parse-prop prop)]
-            (if (wff? prop) (evaluate prop model)
-                  "syntax error")))
+      (let [prop (reformat-prop prop)
+              parsed-prop (parse-prop prop)]
+            (if (wff? parsed-prop) (joincat "[" prop "] " (evaluate parsed-prop model))
+                  (joincat "[" prop "] " "syntax error"))))
 
 ;arguments parameter must be quoted list or vector
 (defn check-validity [conclusion arguments]
@@ -532,8 +578,14 @@
                     model))
 
 (defn parse-input [input]
-    (if (= (first input) \?) (update-output (check-truth (subs input 1)))
-          (assert-prop input)))
+    (cond
+         (= (first input) \?) (update-output (check-truth (subs input 1)))
+         (= (first input) \!) (remove-assertion (subs input 1))
+         (= input "reset")
+             (do
+                 (reset-assertions)
+                 (update-output "Assertions reset."))
+         :else (assert-prop input)))
 
 (defn print-output []
       (deref current-output))
@@ -546,19 +598,31 @@
            [:meta {:http-equiv "Content-type"
                         :content "text/html; charset=utf-8"}]
            [:title "Logifier"]]
+      (include-css "/css/style.css")
       [:body content]))
 
 (defn view-content []
   (view-layout
-       [:h2 "Logifier 3"]
-       [:p {:id "colorchange"} "Affirm some propositions!" ]
+       [:h2 "Logifier"]
+       ;[:p {:id "colorchange"} "Affirm some propositions!" ]
+       [:p {:id "instructions"}
+        "~ = not, & = and, v = or, > = conditional, <> = biconditional" [:br]
+       "Single letters for propositions (except 'v')." [:br]
+       "Remove an assertion by prefixing an '!'" [:br]
+       "Evaluate a proposition by prefixing a '?'" [:br]
+        "Type 'reset' to reset model."]
        [:form {:action "/" :method "post"}
        [:input {:name "input" :id "input"}]]
-       [:p "---: " (print-output)]
+       [:p {:id "output"} "---: " (print-output)]
        [:p]
-       [:p "Assertions: " (list-assertions)]
+       [:p "Known States of Affairs:" [:br] (list-states)]
+       [:p]
+       [:p "Your Assertions: " [:br](print-assertions)]
        [:script {:src "/js/jquery-1.10.2.min.js"}]
-       [:script {:src "/js/cljs.js"}]))
+       [:script {:src "/js/cljs.js"}]
+       [:script "$('#input').focus()"]))
+
+(update-output "[EXAMPLE] (p <> s) & ~(q > (~r v t))")
 
 (defroutes main-routes
   (GET "/" []
