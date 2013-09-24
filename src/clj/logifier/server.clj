@@ -258,7 +258,8 @@
 (defn reformat-prop [prop]
       (if (or (= prop "") (= prop nil)) "invalid syntax"
       (let [prop (str/trim prop)]
-      (if (= (first prop) \() (reformat-prop (subs prop 1 (- (str-length prop) 1)))
+      (if (and (= (first prop) \()
+                   (= (count-next-parens prop) (str-length prop))) (reformat-prop (subs prop 1 (- (str-length prop) 1)))
         (loop [output []
                  remains prop]
         (let [this-one (subs remains 0 1)]
@@ -276,6 +277,9 @@
                (= this-one ")")
                     (if (= (next-char remains) ")") (recur (conj output this-one) (subs remains 1))
                            (recur (conj output this-one " ") (subs remains 1))))))))))
+
+(reformat-prop "(d v l) > f")
+(assert-prop "(d v l) > l")
 
 (defn valid-input? [prop]
       (loop [remains prop]
@@ -322,10 +326,10 @@
 
 (defn parse-prop [prop]
       (let [prop (reformat-prop prop)]
-          (if (= (first prop) \() (parse-prop (subs prop 1 (- (str-length prop) 1)))
+          (if (and (= (first prop) \()
+                       (= (count-next-parens prop) (str-length prop))) (parse-prop (subs prop 1 (- (str-length prop) 1)))
               (if (valid-input? prop)
                   (prefixer (nest-parse prop))))))
-
 
 ;Must take a quoted list or vector as input
 (defn parse-prop-seq [props]
