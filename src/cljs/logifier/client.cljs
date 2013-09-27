@@ -2,6 +2,8 @@
       (:use [jayq.core :only [$]])
     (:require [jayq.core :as jq]))
 
+(js/alert "Hi")
+
 (jq/focus ($ :#input))
 
 (def $colorchange ($ :#colorchange))

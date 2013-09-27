@@ -1,8 +1,23 @@
-(ns logifier
+(ns logifier.logifier
       (:require [clojure.string :as str])
-      (:use [clojure.inspector :include (atom?)]
-               [clojure.string :only (split triml grep)]))
+      (:use [clojure.inspector :include (atom?)]))
 
+;~p v q
+;~q v r
+;p v (q v r)
+;(a & (b v c)) v (p v (q v r))
+;((a & b) v (a & c)) v ((p v q) v r)
+
+;Nest-order subcomponents in each wff
+;Reduce to base configuration
+;Distribution: (X & (Y v Z)) triggers (v (&) (&))
+ ;                    (X v (Y & Z))  triggers (& (v) (v))
+;Association: (X v (Y v Z)) triggered by (v W (v))
+;                     (X & (Y & Z))
+; Equivalence: We can add as a third inference from <>, also when > or < is asserted and < or > is already true
+
+
+;LOGIC
 ;Utilities
 (defn frest [x]
       (first (rest x)))
@@ -21,6 +36,10 @@
                 (if (= remains "") count
                       (recur (subs remains 1) (+ count 1)))))
 
+(defn joincat [& input]
+      [input (list input)]
+      (str/join (concat input)))
+
 
 ;Set up our model
 (def model (atom #{}))
@@ -28,6 +47,8 @@
 (def test-model (atom #{}))
 
 (def assertions (atom #{}))
+
+(def current-output (atom #{}))
 
 
 ;Basic operations
@@ -51,6 +72,7 @@
 
 (defn wff? [prop]
       (cond
+           (= prop nil) false
            (atom? prop) true
            (not (vector? prop)) false
            (= (first prop) "lnot") (if
@@ -134,6 +156,9 @@
                  parens 0
                  count 0]
                  (cond
+                      ;Make sure parens are balanced
+                      (and (= (str-length remains) 1) (not (= (first remains) \)))) nil
+                      (and (= (str-length remains) 1) (> parens 1)) nil
                       (= (first remains) \))
                               (if (= parens 1)
                                     (+ count 1)
@@ -185,9 +210,7 @@
 (defn nest-parse [input]
    (if (= (str-length input) 1) (first input)
       (let [input (clean-parse input)]
-          ; (if (= (count input) 1) )
       (letfn [(parse [input]
-                     ;(let [input (first (clean-parse input))]
                       (cond (= (type input) java.lang.Character) input
                                 (= (type input) clojure.lang.PersistentVector) (into [] (map #(parse %) input))
                                 (= (type input) java.lang.String) (if
@@ -195,8 +218,163 @@
                                                                                                                      input)))]
                 (into [] (map #(parse %) input))))))
 
+;Reduce to Sheffer Strokes
+(defn sheffer-atom [prop]
+      (vector "|" (vector "|" prop prop) (vector "|" prop prop)))
+
+(defn sheffer-not [prop]
+      (let [negated-prop (rest prop)]
+                (vector "|" (first negated-prop) (first negated-prop))))
+
+(defn sheffer-or [prop]
+      (let [one (frest prop)
+              two (frerest prop)
+              earlier (before one two)
+              later (after one two)]
+            (vector "|" (vector "|" earlier earlier) (vector "|" later later))))
+
+(defn sheffer-and [prop]
+      (let [one (frest prop)
+              two (frerest prop)
+              earlier (before one two)
+              later (after one two)]
+            (vector "|" (vector "|" earlier later) (vector "|" earlier later))))
+
+(defn sheffer-cond [prop]
+      (let [negated-one (vector "lnot" (frest prop))
+              two (frerest prop)]
+      (sheffer-or (vector "lor" negated-one two))))
+
+(defn shefferize [prop]
+   (= (type (first prop)) java.lang.Character) (sheffer-atom prop)
+      (let [operator (first prop)]
+      (cond
+           (= operator "lnot") (sheffer-not prop)
+           (= operator "lor") (sheffer-or prop)
+           (= operator "land") (sheffer-and prop)
+           (= operator "lcond") (sheffer-cond prop)
+           (= operator "lbicond") (sheffer-and (vector "land" (sheffer-cond (vector "lcond" (frest prop) (frerest prop))) (sheffer-cond (vector "lcond" (frerest prop) (frest prop)))))
+       )))
+
+
+;Input Validation
+(defn binary-operator? [character]
+      (if (= character nil) false
+          (boolean (re-find #"[><&v]" character)
+               )))
+
+(defn negate-operator? [character]
+      (or (= character "~")
+            (= character "-")))
+
+(defn input-operator? [character]
+      (or (binary-operator? character)
+            (negate-operator? character)))
+
+(defn next-char [prop]
+      (if (= (str-length prop) 1) nil
+          (let [length (str-length prop)]
+          (loop [next-one (subs prop 1 2)
+                 count 1]
+                (cond
+                     (= next-one " ")
+                         (if (< count length) (recur (subs prop count (+ count 1))(+ count 1))
+                              nil)
+                    :else next-one)
+             ))))
+
+(defn atomic-prop? [prop]
+      (if (= prop nil) false
+      (boolean (re-find #"(?=[^v])[a-z]" prop))))
+
+(defn balanced-parens? [prop]
+      (boolean (count-next-parens prop)))
+
+(defn open-parens? [char]
+      (or (= char "(") (= char \()))
+
+(defn close-parens? [char]
+      (or (= char ")") (= char \))))
+
+(defn reformat-prop [prop]
+      (if (or (= prop "") (= prop nil)) "invalid syntax"
+      (let [prop (str/trim prop)]
+      (if (and (= (first prop) \()
+                   (= (count-next-parens prop) (str-length prop))) (reformat-prop (subs prop 1 (- (str-length prop) 1)))
+        (loop [output []
+                 remains prop]
+        (let [this-one (subs remains 0 1)]
+           (cond
+               (= (str-length remains) 1) (str/trim (str/join (conj output this-one)))
+               (= this-one " ") (recur output (subs remains 1))
+               (atomic-prop? this-one)
+                    (if (= (next-char remains) ")") (recur (conj output this-one) (subs remains 1))
+                          (recur (conj output this-one " ") (subs remains 1)))
+               (binary-operator? this-one)
+                    (if (= this-one "<") (recur (conj output this-one "> ") (subs remains 2))
+                        (recur (conj output this-one " ") (subs remains 1)))
+               (negate-operator? this-one) (recur (conj output this-one) (subs remains 1))
+               (= this-one "(") (recur (conj output this-one) (subs remains 1))
+               (= this-one ")")
+                    (if (= (next-char remains) ")") (recur (conj output this-one) (subs remains 1))
+                           (recur (conj output this-one " ") (subs remains 1))))))))))
+
+(defn ready-to-assert [prop]
+    (let [prop (reformat-prop prop)]
+          (cond
+               (= (str-length prop) 1) prop
+               (= (first prop) \~) prop
+               :else (joincat "(" prop ")"))))
+
+(defn valid-input? [prop]
+      (loop [remains prop]
+          (let [this-one (subs remains 0 1)
+                  next-one (next-char remains)]
+            (cond
+                 (= this-one " ") (recur (subs remains 1))
+                 (= (str-length remains) 1)
+                     (cond
+                          (input-operator? remains) false
+                          (open-parens? remains) false
+                          (or (= next-one nil)
+                               (atomic-prop? remains))
+                              true
+                          :else false)
+                 (atomic-prop? this-one)
+                     (cond
+                         (= next-one nil) true
+                         (binary-operator? next-one) (recur (subs remains 1))
+                         :else false)
+                 (binary-operator? this-one)
+                     (if (or (atomic-prop? next-one)
+                                (negate-operator? next-one)
+                                (= next-one "("))
+                          (recur (subs remains 1))
+                          (if (= next-one ">") (recur (subs remains 2))
+                              false))
+                 (negate-operator? this-one)
+                     (if (or (atomic-prop? next-one)
+                                (= next-one "("))
+                          (recur (subs remains 1))
+                          false)
+                 (= this-one "(")
+                     ;Check to see that parens are balanced
+                     (if (balanced-parens? remains)
+                         (if (valid-input? (reformat-prop (subs remains 1 (- (count-next-parens remains) 1))))
+                               (if (< (count-next-parens remains) (str-length remains))
+                                  ;Replace parens-enclosed statement with an atomic proposition for testing purposes
+                                  (recur (str/join (concat "p" (subs remains (count-next-parens remains)))))
+                                  true)
+                              false)
+                          false)
+                 :else false))))
+
 (defn parse-prop [prop]
-      (prefixer (nest-parse prop)))
+      (let [prop (reformat-prop prop)]
+          (if (and (= (first prop) \()
+                       (= (count-next-parens prop) (str-length prop))) (parse-prop (subs prop 1 (- (str-length prop) 1)))
+              (if (valid-input? prop)
+                  (prefixer (nest-parse prop))))))
 
 ;Must take a quoted list or vector as input
 (defn parse-prop-seq [props]
@@ -288,10 +466,25 @@
          (atom? prop) (find-value prop this-model)
          :else (evaluate-composite prop)))))
 
+(defn list-reversed-symbols [input]
+    (if (and (= (count input) 1)
+                 (= (evaluate (first input) model) "false")) (list-reversed-symbols (conj ["lnot"] input))
+    (let [input (flatten input)]
+    (loop [output []
+               remains input
+               binary-count 0]
+      (cond
+         (= (first remains) nil) (str/join (flatten (conj output (repeat binary-count "()"))))
+         (= (first remains) "lnot") (recur (conj output "~") (rest remains) binary-count)
+         (= (first remains) "lor") (recur (conj output "v") (rest remains) (+ binary-count 1))
+         (= (first remains) "land") (recur (conj output "&") (rest remains) (+ binary-count 1))
+         (= (first remains) "lcond") (recur (conj output ">") (rest remains) (+ binary-count 1))
+         (= (type (first remains)) java.lang.Character) (recur (conj output (str (first remains))) (rest remains) binary-count)
+         :else (recur (conj output (first remains)) (rest remains) binary-count)
+         )))))
 
-;Affirm
 
-
+;Affirming
 ;Be sure to always clean-up initial props before affirming them!
 (defn affirm [prop this-model]
       (let [prop (clean-up prop)]
@@ -351,7 +544,7 @@
       (deref this-model))
 
 
-;VALIDITY/SOUNDNESS
+;Validity/Soundness
 (defn valid? [conclusion premises]
       (do
           (clear-model test-model)
@@ -366,35 +559,64 @@
 
 
 ;INTERFACE
-(defn assert-prop [prop]
-      (let [parsed-prop (parse-prop prop)]
-            (if (wff? parsed-prop)
-                  (do
-                        (swap! assertions conj prop)
-                        (affirm parsed-prop model))
-                  "syntax error")))
+(defn list-states []
+    (let [states (filter #(= (type %) java.lang.Character) (list-names model))
+            true-states (map #(str %) (filter #(= (evaluate % model) "true") states))
+            false-states (map #(str "~" %) (filter #(= (evaluate % model) "false") states))]
+          (str/join " . " (sort compare (flatten (conj true-states false-states))))
+      ))
 
-(defn remove-assertion [prop]
-      (do
-          (reset! assertions
-              (filter #(not (= % prop)) (list-assertions)))
-          (reassert-props)))
-
-(defn reassert-props []
-     (do
-         (clear-model model)
-         (doseq [props (deref assertions)] (assert-prop props))))
-
-(defn list-assertions []
-     (into () (deref assertions)))
+(defn update-output [output]
+      (reset! current-output output))
 
 (defn reset-assertions []
+     (clear-model model)
      (clear-model assertions))
 
+(defn asserted? [prop]
+      (let [prop (ready-to-assert prop)]
+      (or (= (filter #(= % prop) (deref assertions)) (list prop))
+            (= (filter #(= % (joincat "(" prop ")")) (deref assertions)) (list prop)))))
+
+(defn assert-prop [prop]
+      (if (= (type prop) java.lang.Character) (assert-prop (str prop))
+      (let [prop (reformat-prop prop)
+              parsed-prop (parse-prop prop)]
+            (if (wff? parsed-prop)
+                  (if-not (= (evaluate parsed-prop model) "false")
+                     (if (asserted? prop) (update-output (joincat "[" prop "] already asserted!"))
+                         (do
+                                (swap! assertions conj (ready-to-assert prop))
+                                (affirm parsed-prop model)
+                                (update-output (joincat "[" prop "] asserted"))))
+                      (update-output (joincat "[" prop "] inconsistent")))
+                  (update-output (joincat "[" prop "] " "syntax error"))))))
+
+(defn print-assertions []
+     (str/join " . " (into () (deref assertions))))
+
+(defn reassert-props []
+     (let [temp-assertions (deref assertions)]
+     (do
+         (clear-model model)
+         (reset-assertions)
+         (doseq [props temp-assertions] (assert-prop props)))))
+
+(defn remove-assertion [prop]
+      (if-not (asserted? prop) (update-output (joincat "[" prop "] hasn't been asserted"))
+      (let [prop (ready-to-assert prop)]
+      (do
+          (reset! assertions
+              (filter #(not (= % prop)) (deref assertions)))
+          (reassert-props)
+          (update-output (joincat "[" prop "] removed"))))))
+
+
 (defn check-truth [prop]
-      (let [prop (parse-prop prop)]
-            (if (wff? prop) (evaluate prop model)
-                  "syntax error")))
+      (let [prop (reformat-prop prop)
+              parsed-prop (parse-prop prop)]
+            (if (wff? parsed-prop) (joincat "[" prop "] " (evaluate parsed-prop model))
+                  (joincat "[" prop "] " "syntax error"))))
 
 ;arguments parameter must be quoted list or vector
 (defn check-validity [conclusion arguments]
@@ -407,4 +629,15 @@
                     (parse-prop-seq arguments)
                     model))
 
+(defn parse-input [input]
+    (cond
+         (= (first input) \?) (update-output (check-truth (subs input 1)))
+         (= (first input) \!) (remove-assertion (subs input 1))
+         (= input "reset")
+             (do
+                 (reset-assertions)
+                 (update-output "Assertions reset."))
+         :else (assert-prop input)))
 
+(defn print-output []
+      (deref current-output))
