@@ -10,11 +10,8 @@
 
 ;Nest-order subcomponents in each wff
 ;Reduce to base configuration
-;Distribution: (X & (Y v Z)) triggers (v (&) (&))
- ;                    (X v (Y & Z))  triggers (& (v) (v))
-;Association: (X v (Y v Z)) triggered by (v W (v))
-;                     (X & (Y & Z))
-; Equivalence: We can add as a third inference from <>, also when > or < is asserted and < or > is already true
+
+
 
 
 ;LOGIC
@@ -45,6 +42,8 @@
 (def model (atom #{}))
 
 (def test-model (atom #{}))
+
+(def conditional-model (atom #{}))
 
 (def assertions (atom #{}))
 
@@ -87,6 +86,18 @@
       (if (and (not (atom? prop)) (= (first prop) "lnot"))
                 (frest prop)
                 (vector "lnot" prop)))
+
+(defn converse? [one two]
+      (if-not (or (atom? one) (atom? two))
+          (if (and (= (first one) "lor") (= (first two) "lor"))
+              (or
+                  (and
+                       (= (frest one) (negate (frest two)))
+                       (= (frerest one) (negate (frerest two))))
+                  (and
+                       (= (frest one) (negate (frerest two)))
+                       (= (frerest one) (negate (frest two))))
+               ))))
 
 (defn nest-compare [one two]
       (compare (apply str (flatten one)) (apply str (flatten two))))
@@ -484,6 +495,13 @@
          )))))
 
 
+
+
+;Distribution: (X & (Y v Z)) triggers (v (&) (&))
+ ;                    (X v (Y & Z))  triggers (& (v) (v))
+;Association: (X v (Y v Z)) triggered by (v W (v))
+;                     (X & (Y & Z))
+
 ;Affirming
 ;Be sure to always clean-up initial props before affirming them!
 (defn affirm [prop this-model]
@@ -500,11 +518,35 @@
                                                        (affirm (frest prop) test-model)
                                                        (= (evaluate (frerest prop) test-model) "false"))))
                             :else false))
-                 (insert-prop [prop value this-model]
+              (reductio? [prop this-model]
+                 (do
+                      (clear-model conditional-model)
+                      (reset! conditional-model (deref this-model))
+                      (affirm prop conditional-model)
+                      (if (= (evaluate \! conditional-model) "true") true false)))
+              (reductio-affirm [prop this-model]
+                      (if (reductio? prop this-model) (affirm (negate (prop)) this-model)))
+              (nest-reductio [prop this-model]
+                  (cond
+                       (= (type prop) java.lang.Character)
+                           (do
+                                 (reductio-affirm prop this-model)
+                                 (reductio-affirm (negate prop) this-model))
+                       (and (= (count prop) 2) (= (first prop) "lnot"))
+                           (nest-reductio (frest prop))
+                       (= (count prop) 3)
+                           (do
+                                 (affirm prop this-model)
+                                 (reductio-affirm (negate prop) this-model)
+                                 (nest-reductio (frest prop) this-model)
+                                 (nest-reductio (frerest prop) this-model))
+                       :else (list "ERROR: Not a wff for reductio:" prop)))
+              (insert-prop [prop value this-model]
                       (letfn [(recalc []
                             (loop [initial-state (deref this-model)]
                                      (do
                                            (doseq [props (list-names this-model)] (affirm props this-model))
+                                           (doseq [props (list-names this-model)] (nest-reductio props this-model))
                                            (if-not (= initial-state (deref this-model)) (recur (deref this-model))))))]
                       (if (has-name? prop this-model) "Duplicate Entry"
                            (if
@@ -523,16 +565,35 @@
                                              :else (list "ERROR: not a valid operator" prop)
                                                  )))
                 (decomp-lor [prop]
-                      (cond
-                           (= (evaluate (first prop) this-model) "false") (affirm (frest prop) this-model)
-                           (= (evaluate (frest prop) this-model) "false") (affirm (first prop) this-model)
-                          :else (insert-prop (vector "lor" (first prop) (frest prop)) "true" this-model)
-                       ))
+                      (let [earlier (before (first prop) (frest prop))
+                              later (after (first prop) (frest prop))]
+                      (do
+                           (cond
+                               (= (evaluate (first prop) this-model) "false") (affirm (frest prop) this-model)
+                               (= (evaluate (frest prop) this-model) "false") (affirm (first prop) this-model)
+                               (= earlier later) (affirm earlier this-model)
+                              :else (insert-prop (vector "lor" earlier later) "true" this-model))
+                           ;For each prop in model, if the prop is a disjunction and one disjunct is (negate (earlier prop)) (affirm (vector "lor"))
+                           (doseq [props (list-names this-model)]
+                                       (#(if-not (= (type %) java.lang.Character)
+                                           (if (= (first %) "lor")
+                                                (let [one (frest %)
+                                                        two (frerest %)]
+                                                (cond
+                                                     (converse? % (vector "lor" earlier later)) (affirm (vector "lor" (vector "land" (negate earlier) later) (vector "land" earlier (negate later))) this-model) ;Equivalence
+                                                     ;Hypothetical Syllogisms/Disjunctive Dilemmas
+                                                     (= one (negate earlier)) (affirm (vector "lor" later two) this-model)
+                                                     (= two (negate earlier)) (affirm (vector "lor" later one) this-model)
+                                                     (= one (negate later)) (affirm (vector "lor" earlier two) this-model)
+                                                     (= two (negate later)) (affirm (vector "lor" earlier one) this-model)
+                                                  )))) props)))))
+
               ]
-      (if (inconsistent? prop) "inconsistent"
+      (if (inconsistent? prop) (do (affirm \! conditional-model) "inconsistent") ;Put a marker in conditional-model for reductio
+      (if (reductio? prop this-model) (do (affirm (negate prop) this-model) (update-output (joincat "[" prop "] " "reductio ad absurdum-- asserted the negation of " prop)))
            (cond
                (atom? prop) (insert-prop prop "true" this-model)
-               :else (decomp prop))))))
+               :else (decomp prop)))))))
 
 (defn recalculate [this-model]
         (loop [initial-state (deref this-model)]
