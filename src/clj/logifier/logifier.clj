@@ -2,16 +2,12 @@
       (:require [clojure.string :as str])
       (:use [clojure.inspector :include (atom?)]))
 
-;~p v q
-;~q v r
-;p v (q v r)
-;(a & (b v c)) v (p v (q v r))
-;((a & b) v (a & c)) v ((p v q) v r)
-
-;Nest-order subcomponents in each wff
-;Reduce to base configuration
-
-
+;TODO
+;Reductios
+;Distribution: (X & (Y v Z)) triggers (v (&) (&))
+ ;                    (X v (Y & Z))  triggers (& (v) (v))
+;Association: (X v (Y v Z)) triggered by (v W (v))
+;                     (X & (Y & Z))
 
 
 ;LOGIC
@@ -54,8 +50,18 @@
 (defn clear-model [this-model]
          (reset! this-model #{}))
 
+(defn update-output [output]
+      (reset! current-output output))
+
+(defn get-correct-prop [name this-model]
+      (if (= (get-value name this-model) "true") name
+            (vector "lnot" name)))
+
 (defn list-names [this-model]
-    (map #(get % :name) (deref this-model)))
+      (map  #(get % :name) (deref this-model)))
+
+(defn list-props [this-model]
+    (map #(get-correct-prop % this-model) (map #(get % :name) (deref this-model))))
 
 (defn has-name? [name this-model]
       (cond (= (filter #(= % name) (list-names this-model)) (list name)) true
@@ -425,6 +431,8 @@
                          (= (negate two) one))
                  false))))
 
+(declare affirm)
+
 (defn evaluate [prop this-model]
       (let [prop (clean-up prop)]
       (letfn [(evaluate-composite [prop]
@@ -439,6 +447,11 @@
                                                                           ["lcond" (frerest prop) (frest prop)]])
                              :else (list "ERROR: Invalid operator" prop)
                              )))
+                (cond-proof? [one two]
+                             (clear-model conditional-model)
+                             (reset! conditional-model (deref this-model))
+                             (affirm (negate one) conditional-model)
+                             (if (= (evaluate two conditional-model) "true") true false))
                 (lnot [prop]
                       (cond
                            (= (evaluate prop this-model) "true") "false"
@@ -455,6 +468,8 @@
                                 (has-name? (vector "lor" one two) this-model)
                                 (has-name? (vector "lor" two one) this-model)
                                 ) "true"
+                           (cond-proof? one two) "true"
+                           (cond-proof? two one) "true"
                            :else "unknown"
                            )))
                 (land [prop]
@@ -495,13 +510,6 @@
          )))))
 
 
-
-
-;Distribution: (X & (Y v Z)) triggers (v (&) (&))
- ;                    (X v (Y & Z))  triggers (& (v) (v))
-;Association: (X v (Y v Z)) triggered by (v W (v))
-;                     (X & (Y & Z))
-
 ;Affirming
 ;Be sure to always clean-up initial props before affirming them!
 (defn affirm [prop this-model]
@@ -518,35 +526,11 @@
                                                        (affirm (frest prop) test-model)
                                                        (= (evaluate (frerest prop) test-model) "false"))))
                             :else false))
-              (reductio? [prop this-model]
-                 (do
-                      (clear-model conditional-model)
-                      (reset! conditional-model (deref this-model))
-                      (affirm prop conditional-model)
-                      (if (= (evaluate \! conditional-model) "true") true false)))
-              (reductio-affirm [prop this-model]
-                      (if (reductio? prop this-model) (affirm (negate (prop)) this-model)))
-              (nest-reductio [prop this-model]
-                  (cond
-                       (= (type prop) java.lang.Character)
-                           (do
-                                 (reductio-affirm prop this-model)
-                                 (reductio-affirm (negate prop) this-model))
-                       (and (= (count prop) 2) (= (first prop) "lnot"))
-                           (nest-reductio (frest prop))
-                       (= (count prop) 3)
-                           (do
-                                 (affirm prop this-model)
-                                 (reductio-affirm (negate prop) this-model)
-                                 (nest-reductio (frest prop) this-model)
-                                 (nest-reductio (frerest prop) this-model))
-                       :else (list "ERROR: Not a wff for reductio:" prop)))
               (insert-prop [prop value this-model]
                       (letfn [(recalc []
                             (loop [initial-state (deref this-model)]
                                      (do
                                            (doseq [props (list-names this-model)] (affirm props this-model))
-                                           (doseq [props (list-names this-model)] (nest-reductio props this-model))
                                            (if-not (= initial-state (deref this-model)) (recur (deref this-model))))))]
                       (if (has-name? prop this-model) "Duplicate Entry"
                            (if
@@ -572,7 +556,7 @@
                                (= (evaluate (first prop) this-model) "false") (affirm (frest prop) this-model)
                                (= (evaluate (frest prop) this-model) "false") (affirm (first prop) this-model)
                                (= earlier later) (affirm earlier this-model)
-                              :else (insert-prop (vector "lor" earlier later) "true" this-model))
+                               :else (insert-prop (vector "lor" earlier later) "true" this-model))
                            ;For each prop in model, if the prop is a disjunction and one disjunct is (negate (earlier prop)) (affirm (vector "lor"))
                            (doseq [props (list-names this-model)]
                                        (#(if-not (= (type %) java.lang.Character)
@@ -589,11 +573,10 @@
                                                   )))) props)))))
 
               ]
-      (if (inconsistent? prop) (do (affirm \! conditional-model) "inconsistent") ;Put a marker in conditional-model for reductio
-      (if (reductio? prop this-model) (do (affirm (negate prop) this-model) (update-output (joincat "[" prop "] " "reductio ad absurdum-- asserted the negation of " prop)))
+      (if (inconsistent? prop) "inconsistent"
            (cond
                (atom? prop) (insert-prop prop "true" this-model)
-               :else (decomp prop)))))))
+               :else (decomp prop))))))
 
 (defn recalculate [this-model]
         (loop [initial-state (deref this-model)]
@@ -626,9 +609,6 @@
             false-states (map #(str "~" %) (filter #(= (evaluate % model) "false") states))]
           (str/join " . " (sort compare (flatten (conj true-states false-states))))
       ))
-
-(defn update-output [output]
-      (reset! current-output output))
 
 (defn reset-assertions []
      (clear-model model)
@@ -702,3 +682,46 @@
 
 (defn print-output []
       (deref current-output))
+
+
+;TEST CODE: Reductio logic
+(defn reductio? [prop this-model]
+                 (do
+                      (clear-model conditional-model)
+                      (reset! conditional-model (deref this-model))
+                      (affirm prop conditional-model)))
+                      ;(if (reductio-flag?) (do
+                      ;                                   (toggle-reductio-flag)
+                      ;                                   true)
+                      ;      false)))
+
+(defn reductio-affirm [prop this-model]
+                      (if (reductio? prop) (affirm (negate prop) this-model)))
+
+(defn nest-reductio [prop this-model]
+                  (cond
+                       (= (type prop) java.lang.Character)
+                           (do
+                                 (reductio-affirm prop this-model)
+                                 (reductio-affirm (negate prop) this-model))
+                       (and (= (count prop) 2) (= (first prop) "lnot"))
+                           (nest-reductio (frest prop) this-model)
+                       (= (count prop) 3)
+                           (do
+                                 (reductio-affirm prop this-model)
+                                 (reductio-affirm (negate prop) this-model)
+                                 (nest-reductio (frest prop) this-model)
+                                 (nest-reductio (frerest prop) this-model))
+                       :else (list "ERROR: Not a wff for reductio:" prop)))
+
+(defn xreduc? [this-model]
+      (some #(= % "inconsistent") (map #(affirm % this-model) (deref this-model))))
+
+
+
+
+
+
+
+
+
