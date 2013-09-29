@@ -53,6 +53,14 @@
 (defn update-output [output]
       (reset! current-output output))
 
+(defn get-value [name this-model]
+      (:value (first (filter #(= (:name %) name) (deref this-model)))))
+
+(defn find-value [name this-model]
+    (let [answer (get-value name this-model)]
+          (if (= answer nil) "unknown"
+               answer)))
+
 (defn get-correct-prop [name this-model]
       (if (= (get-value name this-model) "true") name
             (vector "lnot" name)))
@@ -396,16 +404,6 @@
 ;Must take a quoted list or vector as input
 (defn parse-prop-seq [props]
       (map #(parse-prop %) props))
-
-
-;Getting values
-(defn get-value [name this-model]
-      (:value (first (filter #(= (:name %) name) (deref this-model)))))
-
-(defn find-value [name this-model]
-    (let [answer (get-value name this-model)]
-          (if (= answer nil) "unknown"
-               answer)))
 
 
 ;Evaluate
