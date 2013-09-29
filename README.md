@@ -5,11 +5,11 @@ A representation of propositional logic in Clojure.
 ## Usage
 
 Operators: 
-..* ~ = not
-..* & = and 
-..* v = or 
-..* > = conditional 
-..* <> = biconditional
+* ~ = not
+* & = and 
+* v = or 
+* > = conditional 
+* <> = biconditional
 
 Single letters for propositions (except 'v').
 Remove an assertion by prefixing an '!'
