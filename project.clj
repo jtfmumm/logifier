@@ -9,6 +9,7 @@
                             [jayq "2.4.0"]
                             [hiccup "1.0.4"]]
   :source-paths ["src/clj"]
+  :uberjar-name "logifier-standalone.jar"
   :plugins [[lein-cljsbuild "0.3.2"]
                  [lein-ring "0.8.7"]]
   :cljsbuild {
