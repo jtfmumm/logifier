@@ -101,6 +101,22 @@
                 (frest prop)
                 (vector "lnot" prop)))
 
+(defn land? [prop]
+      (if-not (= (type prop) java.lang.Character)
+            (= (first prop) "land")))
+
+(defn lor? [prop]
+    (if-not (= (type prop) java.lang.Character)
+            (= (first prop) "lor")))
+
+(defn lcond? [prop]
+      (if-not (= (type prop) java.lang.Character)
+            (= (first prop) "lcond")))
+
+(defn lbicond? [prop]
+    (if-not (= (type prop) java.lang.Character)
+            (= (first prop) "lbicond")))
+
 (defn converse? [one two]
       (if-not (or (atom? one) (atom? two))
           (if (and (= (first one) "lor") (= (first two) "lor"))
@@ -120,12 +136,14 @@
       (cond
            (and (atom? one) (not (atom? two))) one
            (and (atom? two) (not (atom? one))) two
+           (and (atom? one) (atom? two)) (first (sort compare [one two]))
            :else (first (sort nest-compare [one two]))))
 
 (defn after [one two]
       (cond
            (and (atom? one) (not (atom? two))) two
            (and (atom? two) (not (atom? one))) one
+           (and (atom? one) (atom? two)) (frest (sort compare [one two]))
            :else (frest (sort nest-compare [one two]))))
 
 (defn clean-up [prop]
@@ -429,6 +447,27 @@
                          (= (negate two) one))
                  false))))
 
+(def one ["land" \x \b])
+(def two ["land" \x \a])
+(vector "lor" (before (frerest one) (frerest two)) (after (frerest one) (frerest two)))
+                 (before \b \a)
+
+(defn distributed [one two]
+      (if (and
+               (land? one)
+               (land? two))
+          (cond
+                 (= (frest one) (frest two))
+                       (vector "land" (frest one) (vector "lor" (before (frerest one) (frerest two)) (after (frerest one) (frerest two))))
+                 (= (frest one) (frerest two))
+                       (vector "land" (frest one) (vector "lor" (before (frerest one) (frest two)) (after (frerest one) (frest two))))
+                 (= (frerest one) (frest two))
+                       (vector "land" (frerest one) (vector "lor" (before (frest one) (frerest two)) (after (frest one) (frerest two))))
+                 (= (frerest one) (frerest two))
+                       (vector "land" (frerest one) (vector "lor" (before (frest one) (frest two)) (after (frest one) (frest two))))
+                 :else (vector "lor" one two)
+           )))
+
 (declare affirm)
 
 (defn evaluate [prop this-model]
@@ -468,6 +507,7 @@
                                 ) "true"
                            (cond-proof? one two) "true"
                            (cond-proof? two one) "true"
+                           (and (land? one) (land? two)) (evaluate (distributed one two) this-model)
                            :else "unknown"
                            )))
                 (land [prop]
@@ -554,6 +594,7 @@
                                (= (evaluate (first prop) this-model) "false") (affirm (frest prop) this-model)
                                (= (evaluate (frest prop) this-model) "false") (affirm (first prop) this-model)
                                (= earlier later) (affirm earlier this-model)
+                               (and (land? earlier) (land? later)) (affirm (distributed earlier later) this-model) ;Distribute
                                :else (insert-prop (vector "lor" earlier later) "true" this-model))
                            ;For each prop in model, if the prop is a disjunction and one disjunct is (negate (earlier prop)) (affirm (vector "lor"))
                            (doseq [props (list-names this-model)]
