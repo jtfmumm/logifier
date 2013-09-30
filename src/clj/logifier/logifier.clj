@@ -2,9 +2,6 @@
       (:require [clojure.string :as str])
       (:use [clojure.inspector :include (atom?)]))
 
-;TODO
-;Reductios
-
 
 ;LOGIC
 ;Utilities
