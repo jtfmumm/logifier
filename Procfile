@@ -1,1 +1,0 @@
-web: java $JVM_OPTS -cp target/logifier-standalone.jar clojure.main -m logifier.server $PORT
