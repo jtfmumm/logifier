@@ -1,9 +1,9 @@
-
 (ns logifier.server
   (:require
             [compojure.handler :as handler]
             [compojure.route :as route]
-            [ring.util.response :as response])
+            [ring.util.response :as response]
+            [ring.adapter.jetty :refer [run-jetty]])
   (:use [hiccup.core]
            [hiccup.page :only (include-css)]
            [compojure.core]
@@ -57,3 +57,4 @@
 
 (def app (handler/site main-routes))
 
+(defn -main [port] (run-jetty app {:port (Integer. port)}))
