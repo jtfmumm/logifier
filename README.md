@@ -2,9 +2,7 @@
 
 A representation of propositional logic in Clojure.
 
-## Usage
-
-You can play around with a running example at http://logifier.jtfmumm.com.  
+## Usage  
 
 Operators: 
 * ~ = not
