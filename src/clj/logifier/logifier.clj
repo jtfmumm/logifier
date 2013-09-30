@@ -4,10 +4,6 @@
 
 ;TODO
 ;Reductios
-;Distribution: (X & (Y v Z)) triggers (v (&) (&))
- ;                    (X v (Y & Z))  triggers (& (v) (v))
-;Association: (X v (Y v Z)) triggered by (v W (v))
-;                     (X & (Y & Z))
 
 
 ;LOGIC

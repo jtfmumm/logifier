@@ -10,8 +10,6 @@
                             [hiccup "1.0.4"]]
                             ;[ring/ring-servlet "1.2.0-RC1"]]
   :source-paths ["src/clj"]
-  ;:uberjar-name ["logifier-standalone.jar"]
-  ;:min-lein-version ["2.0.0"]
   :plugins [[lein-cljsbuild "0.3.2"]
                  [lein-ring "0.8.7"]]
   :cljsbuild {
