@@ -1,0 +1,27 @@
+<html>
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>Logifier</title>
+	<link href="css/style.css" rel="stylesheet" type="text/css">
+</head>
+
+<body style="">
+	<h2 id="colorchange" style="color: blue;">Logifier</h2>
+	<p id="instructions">~ = not, &amp; = and, v = or, &gt; = conditional, &lt;&gt; = biconditional<br>Single letters for propositions (except 'v').
+	<br>Remove an assertion by prefixing an '!'
+	<br>Evaluate a proposition by prefixing a '?'
+	<br>Type 'reset' to reset model.</p>
+	<form onsubmit="logifier.cs.do_everything(); return false;" id="sendInput" autocomplete="off">
+	<input id="input" name="input"></form>
+	<p id="output">---: <span id="display"></span></p>
+	<p></p>
+	<p>Known States of Affairs: <br><span id="knownStates"></span></p>
+	<p></p>
+	<p>Your Assertions: <br><span id="assertions"></span></p><script src="js/jquery-1.10.2.min.js"></script>
+
+	<script src="js/cljs.js"></script>
+	<script>$('#input').focus()</script>
+</body>
+
+</html>

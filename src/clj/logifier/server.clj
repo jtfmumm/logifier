@@ -1,5 +1,5 @@
 (ns logifier.server
-  (:require
+ (:require
             [compojure.handler :as handler]
             [compojure.route :as route]
             [ring.util.response :as response]
@@ -7,7 +7,7 @@
   (:use [hiccup.core]
            [hiccup.page :only (include-css)]
            [compojure.core]
-           [logifier.logifier]))
+           ));[logifier.logifier]))
 
 ;TODO
 ;Get JS working on app
@@ -35,16 +35,16 @@
         "Type 'reset' to reset model."]
        [:form {:action "/" :method "post"}
        [:input {:name "input" :id "input"}]]
-       [:p {:id "output"} "---: " (print-output)]
+       [:p {:id "output"} "---: " ] (print-output)]
        [:p]
-       [:p "Known States of Affairs:" [:br] (list-states)]
+       [:p "Known States of Affairs:" [:br] ] (list-states)]
        [:p]
-       [:p "Your Assertions: " [:br](print-assertions)]
+       [:p "Your Assertions: " ];[:br](print-assertions)]
        [:script {:src "/js/jquery-1.10.2.min.js"}]
        [:script {:src "/js/cljs.js"}]
        [:script "$('#input').focus()"]))
 
-(update-output "[EXAMPLE] (p <> s) & ~(q > (~r v t))")
+;(update-output "[EXAMPLE] (p <> s) & ~(q > (~r v t))")
 
 (defroutes main-routes
   (GET "/" []
@@ -58,3 +58,4 @@
 (def app (handler/site main-routes))
 
 (defn -main [port] (run-jetty app {:port (Integer. port)}))
+
