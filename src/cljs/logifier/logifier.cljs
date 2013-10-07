@@ -589,8 +589,8 @@
                            (if
                                (wff? prop) (do
                                        (swap! this-model conj {:name prop :value value})
-                                       ) (recalc))
-                               (list "ERROR: Not a well-formed formula:" prop))))
+                                       (recalc))
+                               (list "ERROR: Not a well-formed formula:" prop)))))
                  (new-affirm [prop]
                      (if-not (has-name? (clean-up prop) this-model)
                            (affirm prop this-model)))
@@ -634,6 +634,7 @@
                                                   )))) props)))))
 
               ]
+      ;(if (reductio? prop) (affirm (negate prop) this-model)
       (if (inconsistent? prop) "inconsistent"
            (cond
                (atom? prop) (insert-prop prop "true" this-model)

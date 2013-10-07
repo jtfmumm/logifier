@@ -13426,7 +13426,7 @@ logifier.affirm = function affirm(b, c) {
         b = cljs.core.deref.call(null, d)
       }
     };
-    return cljs.core.truth_(logifier.has_name_QMARK_.call(null, b, d)) ? "Duplicate Entry" : cljs.core.truth_(logifier.wff_QMARK_.call(null, b)) ? cljs.core.swap_BANG_.call(null, d, cljs.core.conj, cljs.core.PersistentArrayMap.fromArray(["\ufdd0:name", b, "\ufdd0:value", c], !0)) : e.call(null)
+    return cljs.core.truth_(logifier.has_name_QMARK_.call(null, b, d)) ? "Duplicate Entry" : cljs.core.truth_(logifier.wff_QMARK_.call(null, b)) ? (cljs.core.swap_BANG_.call(null, d, cljs.core.conj, cljs.core.PersistentArrayMap.fromArray(["\ufdd0:name", b, "\ufdd0:value", c], !0)), e.call(null)) : cljs.core.list.call(null, "ERROR: Not a well-formed formula:", b)
   }, f = function(b) {
     return cljs.core.not.call(null, logifier.has_name_QMARK_.call(null, logifier.clean_up.call(null, b), c)) ? affirm.call(null, b, c) : null
   }, g = function(b) {
@@ -13615,26 +13615,26 @@ logifier.print_output = function() {
   return cljs.core.deref.call(null, logifier.current_output)
 };
 if(!cljs.core._EQ_.call(null, cljs.core.type.call(null, cljs.core.PersistentVector.fromArray(["p"], !0)), cljs.core.PersistentVector)) {
-  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "type", "type", -1636955917, null), cljs.core.vec(["p"])), cljs.core.hash_map("\ufdd0:line", 749, "\ufdd0:column", 12)), new cljs.core.Symbol(null, "cljs.core.PersistentVector", "cljs.core.PersistentVector", -65585786, null)), cljs.core.hash_map("\ufdd0:line", 
-  749, "\ufdd0:column", 9))))].join(""));
+  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "type", "type", -1636955917, null), cljs.core.vec(["p"])), cljs.core.hash_map("\ufdd0:line", 750, "\ufdd0:column", 12)), new cljs.core.Symbol(null, "cljs.core.PersistentVector", "cljs.core.PersistentVector", -65585786, null)), cljs.core.hash_map("\ufdd0:line", 
+  750, "\ufdd0:column", 9))))].join(""));
 }
 if(!cljs.core.truth_(logifier.wff_QMARK_.call(null, cljs.core.PersistentVector.fromArray(["lnot", "x"], !0)))) {
-  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "wff?", "wff?", -1636885151, null), cljs.core.vec(["lnot", "x"])), cljs.core.hash_map("\ufdd0:line", 751, "\ufdd0:column", 9))))].join(""));
+  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "wff?", "wff?", -1636885151, null), cljs.core.vec(["lnot", "x"])), cljs.core.hash_map("\ufdd0:line", 752, "\ufdd0:column", 9))))].join(""));
 }
 if(!cljs.core._EQ_.call(null, logifier.clean_parse.call(null, "p v y"), cljs.core.PersistentVector.fromArray(["p", "lor", "y"], !0))) {
-  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "clean-parse", "clean-parse", 721798120, null), "p v y"), cljs.core.hash_map("\ufdd0:line", 753, "\ufdd0:column", 12)), cljs.core.vec(["p", "lor", "y"])), cljs.core.hash_map("\ufdd0:line", 753, "\ufdd0:column", 9))))].join(""));
+  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "clean-parse", "clean-parse", 721798120, null), "p v y"), cljs.core.hash_map("\ufdd0:line", 754, "\ufdd0:column", 12)), cljs.core.vec(["p", "lor", "y"])), cljs.core.hash_map("\ufdd0:line", 754, "\ufdd0:column", 9))))].join(""));
 }
 if(!cljs.core._EQ_.call(null, logifier.reformat_prop.call(null, "pvy"), "p v y")) {
-  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "reformat-prop", "reformat-prop", 836029727, null), "pvy"), cljs.core.hash_map("\ufdd0:line", 755, "\ufdd0:column", 12)), "p v y"), cljs.core.hash_map("\ufdd0:line", 755, "\ufdd0:column", 9))))].join(""));
+  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "reformat-prop", "reformat-prop", 836029727, null), "pvy"), cljs.core.hash_map("\ufdd0:line", 756, "\ufdd0:column", 12)), "p v y"), cljs.core.hash_map("\ufdd0:line", 756, "\ufdd0:column", 9))))].join(""));
 }
 if(!cljs.core.truth_(logifier.valid_input_QMARK_.call(null, "p v y"))) {
-  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "valid-input?", "valid-input?", 229392991, null), "p v y"), cljs.core.hash_map("\ufdd0:line", 757, "\ufdd0:column", 9))))].join(""));
+  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "valid-input?", "valid-input?", 229392991, null), "p v y"), cljs.core.hash_map("\ufdd0:line", 758, "\ufdd0:column", 9))))].join(""));
 }
 if(!cljs.core._EQ_.call(null, logifier.nest_parse.call(null, "p v y"), cljs.core.PersistentVector.fromArray(["p", "lor", "y"], !0))) {
-  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "nest-parse", "nest-parse", 174198967, null), "p v y"), cljs.core.hash_map("\ufdd0:line", 759, "\ufdd0:column", 12)), cljs.core.vec(["p", "lor", "y"])), cljs.core.hash_map("\ufdd0:line", 759, "\ufdd0:column", 9))))].join(""));
+  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "nest-parse", "nest-parse", 174198967, null), "p v y"), cljs.core.hash_map("\ufdd0:line", 760, "\ufdd0:column", 12)), cljs.core.vec(["p", "lor", "y"])), cljs.core.hash_map("\ufdd0:line", 760, "\ufdd0:column", 9))))].join(""));
 }
 if(!cljs.core._EQ_.call(null, logifier.prefixer.call(null, cljs.core.PersistentVector.fromArray(["p", "lor", "y"], !0)), cljs.core.PersistentVector.fromArray(["lor", "p", "y"], !0))) {
-  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "prefixer", "prefixer", 1365892216, null), cljs.core.vec(["p", "lor", "y"])), cljs.core.hash_map("\ufdd0:line", 761, "\ufdd0:column", 12)), cljs.core.vec(["lor", "p", "y"])), cljs.core.hash_map("\ufdd0:line", 761, "\ufdd0:column", 9))))].join(""));
+  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "prefixer", "prefixer", 1365892216, null), cljs.core.vec(["p", "lor", "y"])), cljs.core.hash_map("\ufdd0:line", 762, "\ufdd0:column", 12)), cljs.core.vec(["lor", "p", "y"])), cljs.core.hash_map("\ufdd0:line", 762, "\ufdd0:column", 9))))].join(""));
 }
 ;cljs.reader = {};
 cljs.reader.PushbackReader = {};
