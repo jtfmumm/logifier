@@ -3,6 +3,7 @@
             [compojure.handler :as handler]
             [compojure.route :as route]
             [ring.util.response :as response]
+            [ring.middleware.resource :as resources]
             [ring.adapter.jetty :refer [run-jetty]])
   (:use [hiccup.core]
            [hiccup.page :only (include-css)]
@@ -35,9 +36,9 @@
         "Type 'reset' to reset model."]
        [:form {:action "/" :method "post"}
        [:input {:name "input" :id "input"}]]
-       [:p {:id "output"} "---: " ] (print-output)]
+       [:p {:id "output"} "---: " ]
        [:p]
-       [:p "Known States of Affairs:" [:br] ] (list-states)]
+       [:p "Known States of Affairs:" [:br] ]
        [:p]
        [:p "Your Assertions: " ];[:br](print-assertions)]
        [:script {:src "/js/jquery-1.10.2.min.js"}]
@@ -48,14 +49,23 @@
 
 (defroutes main-routes
   (GET "/" []
-       (view-content))
-      (route/resources "/")
-  (POST "/" [input]
-      (do
-            (parse-input input)
-            (view-content))))
+       (response/redirect "/index.html")
+      ;(route/resources "/")
+  ;(POST "/" [input]
+   ;   (do
+    ;        (parse-input input)
+     ;       (view-content)))))
+        ))
 
-(def app (handler/site main-routes))
+
+(defn handler [request]
+  (if (= "/" (:uri request))
+      (response/redirect "/index.html")
+      ))
+
+(def app
+  (-> handler
+    (resources/wrap-resource "public")))
 
 (defn -main [port] (run-jetty app {:port (Integer. port)}))
 

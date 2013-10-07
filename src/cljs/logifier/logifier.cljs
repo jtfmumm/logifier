@@ -33,6 +33,9 @@
 (defn simple? [prop]
       (= (count prop) 1))
 
+(defn report [x]
+      (js/console.log x))
+
 ;Set up our model
 (def model (atom #{}))
 
@@ -446,10 +449,15 @@
                          (= (negate two) one))
                  false))))
 
-(def one ["land" \x \b])
-(def two ["land" \x \a])
-(vector "lor" (before (frerest one) (frerest two)) (after (frerest one) (frerest two)))
-                 (before \b \a)
+(defn distribute? [one two]
+      (if (and
+               (land? one)
+               (land? two))
+          (or
+               (= (frest one) (frest two))
+               (= (frest one) (frerest two))
+               (= (frerest one) (frest two))
+               (= (frerest one) (frerest two)))))
 
 (defn distributed [one two]
       (if (and
@@ -506,7 +514,10 @@
                                 ) "true"
                            (cond-proof? one two) "true"
                            (cond-proof? two one) "true"
-                           (and (land? one) (land? two)) (evaluate (distributed one two) this-model)
+                           (and (land? one) (land? two))
+                               (if (distribute? one two)
+                                         (evaluate (distributed one two) this-model)
+                                         "unknown")
                            :else "unknown"
                            )))
                 (land [prop]
@@ -578,8 +589,11 @@
                            (if
                                (wff? prop) (do
                                        (swap! this-model conj {:name prop :value value})
-                                       (recalc))
-                           (list "ERROR: Not a well-formed formula:" prop)))))
+                                       ) (recalc))
+                               (list "ERROR: Not a well-formed formula:" prop))))
+                 (new-affirm [prop]
+                     (if-not (has-name? (clean-up prop) this-model)
+                           (affirm prop this-model)))
                  (decomp [prop]
                                 (let [operate (first prop)]
                                        (cond
@@ -594,11 +608,15 @@
                       (let [earlier (before (first prop) (frest prop))
                               later (after (first prop) (frest prop))]
                       (do
+                           ;(report "decomp-lor")
                            (cond
                                (= (evaluate (first prop) this-model) "false") (affirm (frest prop) this-model)
                                (= (evaluate (frest prop) this-model) "false") (affirm (first prop) this-model)
                                (= earlier later) (affirm earlier this-model)
-                               (and (land? earlier) (land? later)) (affirm (distributed earlier later) this-model) ;Distribute
+                              (and (land? earlier) (land? later))
+                                    (if (distribute? earlier later)
+                                              (affirm (distributed earlier later) this-model)
+                                              (insert-prop (vector "lor" earlier later) "true" this-model));Distribute
                                :else (insert-prop (vector "lor" earlier later) "true" this-model))
                            ;For each prop in model, if the prop is a disjunction and one disjunct is (negate (earlier prop)) (affirm (vector "lor"))
                            (doseq [props (list-names this-model)]
@@ -607,12 +625,12 @@
                                                 (let [one (frest %)
                                                         two (frerest %)]
                                                 (cond
-                                                     (converse? % (vector "lor" earlier later)) (affirm (vector "lor" (vector "land" (negate earlier) later) (vector "land" earlier (negate later))) this-model) ;Equivalence
+                                                     (converse? % (vector "lor" earlier later)) (new-affirm (vector "lor" (vector "land" (negate earlier) later) (vector "land" earlier (negate later)))) ;Equivalence
                                                      ;Hypothetical Syllogisms/Disjunctive Dilemmas
-                                                     (= one (negate earlier)) (affirm (vector "lor" later two) this-model)
-                                                     (= two (negate earlier)) (affirm (vector "lor" later one) this-model)
-                                                     (= one (negate later)) (affirm (vector "lor" earlier two) this-model)
-                                                     (= two (negate later)) (affirm (vector "lor" earlier one) this-model)
+                                                     (= one (negate earlier)) (new-affirm (vector "lor" later two))
+                                                     (= two (negate earlier)) (new-affirm (vector "lor" later one))
+                                                     (= one (negate later)) (new-affirm (vector "lor" earlier two))
+                                                     (= two (negate later)) (new-affirm (vector "lor" earlier one))
                                                   )))) props)))))
 
               ]
