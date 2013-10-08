@@ -13359,7 +13359,6 @@ logifier.evaluate = function evaluate(b, c) {
     return cljs.core._EQ_.call(null, c, "lnot") ? g.call(null, logifier.frest.call(null, b)) : cljs.core._EQ_.call(null, c, "lor") ? h.call(null, cljs.core.rest.call(null, b)) : cljs.core._EQ_.call(null, c, "land") ? i.call(null, cljs.core.rest.call(null, b)) : cljs.core._EQ_.call(null, c, "lcond") ? j.call(null, cljs.core.rest.call(null, b)) : cljs.core._EQ_.call(null, c, "lbicond") ? i.call(null, cljs.core.PersistentVector.fromArray([cljs.core.PersistentVector.fromArray(["lcond", logifier.frest.call(null, 
     b), logifier.frerest.call(null, b)], !0), cljs.core.PersistentVector.fromArray(["lcond", logifier.frerest.call(null, b), logifier.frest.call(null, b)], !0)], !0)) : cljs.core.list.call(null, "ERROR: Invalid operator", b)
   }, f = function(b, d) {
-    logifier.clear_model.call(null, logifier.conditional_model);
     cljs.core.reset_BANG_.call(null, logifier.conditional_model, cljs.core.deref.call(null, c));
     logifier.affirm.call(null, logifier.negate.call(null, b), logifier.conditional_model);
     return cljs.core._EQ_.call(null, evaluate.call(null, d, logifier.conditional_model), "true") ? !0 : !1
@@ -13434,6 +13433,8 @@ logifier.affirm = function affirm(b, c) {
     return cljs.core._EQ_.call(null, d, "lnot") ? e.call(null, logifier.frest.call(null, b), "false", c) : cljs.core._EQ_.call(null, d, "lor") ? h.call(null, cljs.core.vector.call(null, logifier.frest.call(null, b), logifier.frerest.call(null, b))) : cljs.core._EQ_.call(null, d, "land") ? (affirm.call(null, logifier.frest.call(null, b), c), affirm.call(null, logifier.frerest.call(null, b), c)) : cljs.core.list.call(null, "ERROR: not a valid operator", b)
   }, h = function(b) {
     var d = logifier.before.call(null, cljs.core.first.call(null, b), logifier.frest.call(null, b)), g = logifier.after.call(null, cljs.core.first.call(null, b), logifier.frest.call(null, b));
+    logifier.report.call(null, cljs.core.apply.call(null, cljs.core.str, "Test: ", b));
+    logifier.report.call(null, cljs.core.apply.call(null, cljs.core.str, cljs.core.meta.call(null, c)));
     cljs.core._EQ_.call(null, logifier.evaluate.call(null, cljs.core.first.call(null, b), c), "false") ? affirm.call(null, logifier.frest.call(null, b), c) : cljs.core._EQ_.call(null, logifier.evaluate.call(null, logifier.frest.call(null, b), c), "false") ? affirm.call(null, cljs.core.first.call(null, b), c) : cljs.core._EQ_.call(null, d, g) ? affirm.call(null, d, c) : cljs.core.truth_(function() {
       var b = logifier.land_QMARK_.call(null, d);
       return cljs.core.truth_(b) ? logifier.land_QMARK_.call(null, g) : b

@@ -491,8 +491,7 @@
                                                                           ["lcond" (frerest prop) (frest prop)]])
                              :else (list "ERROR: Invalid operator" prop)
                              )))
-                (cond-proof? [one two]
-                             (clear-model conditional-model)
+                (cond-proof? [one two] ;No longer clearing model
                              (reset! conditional-model (deref this-model))
                              (affirm (negate one) conditional-model)
                              (if (= (evaluate two conditional-model) "true") true false))
@@ -608,15 +607,16 @@
                       (let [earlier (before (first prop) (frest prop))
                               later (after (first prop) (frest prop))]
                       (do
-                           ;(report "decomp-lor")
+                           (report (apply str "Test: " prop))
+                           (report (apply str (meta this-model)))
                            (cond
                                (= (evaluate (first prop) this-model) "false") (affirm (frest prop) this-model)
                                (= (evaluate (frest prop) this-model) "false") (affirm (first prop) this-model)
                                (= earlier later) (affirm earlier this-model)
-                              (and (land? earlier) (land? later))
+                               (and (land? earlier) (land? later))
                                     (if (distribute? earlier later)
-                                              (affirm (distributed earlier later) this-model)
-                                              (insert-prop (vector "lor" earlier later) "true" this-model));Distribute
+                                             (affirm (distributed earlier later) this-model)
+                                             (insert-prop (vector "lor" earlier later) "true" this-model));Distribute
                                :else (insert-prop (vector "lor" earlier later) "true" this-model))
                            ;For each prop in model, if the prop is a disjunction and one disjunct is (negate (earlier prop)) (affirm (vector "lor"))
                            (doseq [props (list-names this-model)]
