@@ -2,6 +2,8 @@
 
 A representation of propositional logic in Clojure.
 
+Try it out at http://jtfmumm.com/logifier
+
 ## Usage  
 
 Operators: 

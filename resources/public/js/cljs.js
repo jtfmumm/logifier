@@ -12834,10 +12834,8 @@ clojure.string.escape = function(a, b) {
 };
 var logifier = {atom_QMARK_:function(a) {
   return!cljs.core.coll_QMARK_.call(null, a)
-}, frest:function(a) {
-  return cljs.core.first.call(null, cljs.core.rest.call(null, a))
-}, frerest:function(a) {
-  return logifier.frest.call(null, cljs.core.rest.call(null, a))
+}, third:function(a) {
+  return cljs.core.second.call(null, cljs.core.rest.call(null, a))
 }, exclusive_or:function(a, b) {
   var c;
   c = cljs.core.truth_(a) ? cljs.core.not.call(null, b) : a;
@@ -12870,9 +12868,6 @@ logifier.joincat = function() {
 }();
 logifier.simple_QMARK_ = function(a) {
   return cljs.core._EQ_.call(null, cljs.core.count.call(null, a), 1)
-};
-logifier.report = function(a) {
-  return console.log(a)
 };
 logifier.model = cljs.core.atom.call(null, cljs.core.PersistentHashSet.EMPTY);
 logifier.test_model = cljs.core.atom.call(null, cljs.core.PersistentHashSet.EMPTY);
@@ -12927,12 +12922,12 @@ logifier.wff_QMARK_ = function wff_QMARK_(b) {
   }
   if(cljs.core.vector_QMARK_.call(null, b)) {
     if(cljs.core._EQ_.call(null, cljs.core.first.call(null, b), "lnot")) {
-      return cljs.core._EQ_.call(null, cljs.core.count.call(null, cljs.core.rest.call(null, b)), 1) ? wff_QMARK_.call(null, logifier.frest.call(null, b)) : !1
+      return cljs.core._EQ_.call(null, cljs.core.count.call(null, cljs.core.rest.call(null, b)), 1) ? wff_QMARK_.call(null, cljs.core.second.call(null, b)) : !1
     }
     if(cljs.core.truth_(logifier.operator_QMARK_.call(null, cljs.core.first.call(null, b)))) {
       if(cljs.core._EQ_.call(null, cljs.core.count.call(null, cljs.core.rest.call(null, b)), 2)) {
-        var c = wff_QMARK_.call(null, logifier.frest.call(null, b));
-        return cljs.core.truth_(c) ? wff_QMARK_.call(null, logifier.frerest.call(null, b)) : c
+        var c = wff_QMARK_.call(null, cljs.core.second.call(null, b));
+        return cljs.core.truth_(c) ? wff_QMARK_.call(null, logifier.third.call(null, b)) : c
       }
       return!1
     }
@@ -12943,7 +12938,7 @@ logifier.wff_QMARK_ = function wff_QMARK_(b) {
 logifier.negate = function(a) {
   var b;
   b = (b = cljs.core.not.call(null, logifier.atom_QMARK_.call(null, a))) ? cljs.core._EQ_.call(null, cljs.core.first.call(null, a), "lnot") : b;
-  return b ? logifier.frest.call(null, a) : cljs.core.vector.call(null, "lnot", a)
+  return b ? cljs.core.second.call(null, a) : cljs.core.vector.call(null, "lnot", a)
 };
 logifier.land_QMARK_ = function(a) {
   return cljs.core.not.call(null, logifier.simple_QMARK_.call(null, a)) ? cljs.core._EQ_.call(null, cljs.core.first.call(null, a), "land") : null
@@ -12965,7 +12960,7 @@ logifier.converse_QMARK_ = function(a, b) {
     var c;
     c = (c = cljs.core._EQ_.call(null, cljs.core.first.call(null, a), "lor")) ? cljs.core._EQ_.call(null, cljs.core.first.call(null, b), "lor") : c;
     if(c) {
-      return c = (c = cljs.core._EQ_.call(null, logifier.frest.call(null, a), logifier.negate.call(null, logifier.frest.call(null, b)))) ? cljs.core._EQ_.call(null, logifier.frerest.call(null, a), logifier.negate.call(null, logifier.frerest.call(null, b))) : c, cljs.core.truth_(c) ? c : (c = cljs.core._EQ_.call(null, logifier.frest.call(null, a), logifier.negate.call(null, logifier.frerest.call(null, b)))) ? cljs.core._EQ_.call(null, logifier.frerest.call(null, a), logifier.negate.call(null, logifier.frest.call(null, 
+      return c = (c = cljs.core._EQ_.call(null, cljs.core.second.call(null, a), logifier.negate.call(null, cljs.core.second.call(null, b)))) ? cljs.core._EQ_.call(null, logifier.third.call(null, a), logifier.negate.call(null, logifier.third.call(null, b))) : c, cljs.core.truth_(c) ? c : (c = cljs.core._EQ_.call(null, cljs.core.second.call(null, a), logifier.negate.call(null, logifier.third.call(null, b)))) ? cljs.core._EQ_.call(null, logifier.third.call(null, a), logifier.negate.call(null, cljs.core.second.call(null, 
       b))) : c
     }
   }
@@ -12996,23 +12991,23 @@ logifier.after = function(a, b) {
   }()) ? a : cljs.core.truth_(function() {
     var c = logifier.atom_QMARK_.call(null, a);
     return cljs.core.truth_(c) ? logifier.atom_QMARK_.call(null, b) : c
-  }()) ? logifier.frest.call(null, cljs.core.sort.call(null, cljs.core.compare, cljs.core.PersistentVector.fromArray([a, b], !0))) : logifier.frest.call(null, cljs.core.sort.call(null, logifier.nest_compare, cljs.core.PersistentVector.fromArray([a, b], !0)))
+  }()) ? cljs.core.second.call(null, cljs.core.sort.call(null, cljs.core.compare, cljs.core.PersistentVector.fromArray([a, b], !0))) : cljs.core.second.call(null, cljs.core.sort.call(null, logifier.nest_compare, cljs.core.PersistentVector.fromArray([a, b], !0)))
 };
 logifier.clean_up = function clean_up(b) {
   var c = function g(b) {
     var c = cljs.core.first.call(null, b);
-    return cljs.core._EQ_.call(null, c, "lnot") ? d.call(null, logifier.frest.call(null, b)) : cljs.core._EQ_.call(null, c, "lor") ? e.call(null, cljs.core.vector.call(null, logifier.frest.call(null, b), logifier.frerest.call(null, b))) : cljs.core._EQ_.call(null, c, "land") ? cljs.core.vector.call(null, "land", clean_up.call(null, logifier.frest.call(null, b)), clean_up.call(null, logifier.frerest.call(null, b))) : cljs.core._EQ_.call(null, c, "lcond") ? g.call(null, cljs.core.vector.call(null, 
-    "lor", clean_up.call(null, logifier.negate.call(null, logifier.frest.call(null, b))), clean_up.call(null, logifier.frerest.call(null, b)))) : cljs.core._EQ_.call(null, c, "lbicond") ? g.call(null, cljs.core.PersistentVector.fromArray(["land", cljs.core.PersistentVector.fromArray(["lcond", logifier.frest.call(null, b), logifier.frerest.call(null, b)], !0), cljs.core.PersistentVector.fromArray(["lcond", logifier.frerest.call(null, b), logifier.frest.call(null, b)], !0)], !0)) : cljs.core.list.call(null, 
+    return cljs.core._EQ_.call(null, c, "lnot") ? d.call(null, cljs.core.second.call(null, b)) : cljs.core._EQ_.call(null, c, "lor") ? e.call(null, cljs.core.vector.call(null, cljs.core.second.call(null, b), logifier.third.call(null, b))) : cljs.core._EQ_.call(null, c, "land") ? cljs.core.vector.call(null, "land", clean_up.call(null, cljs.core.second.call(null, b)), clean_up.call(null, logifier.third.call(null, b))) : cljs.core._EQ_.call(null, c, "lcond") ? g.call(null, cljs.core.vector.call(null, 
+    "lor", clean_up.call(null, logifier.negate.call(null, cljs.core.second.call(null, b))), clean_up.call(null, logifier.third.call(null, b)))) : cljs.core._EQ_.call(null, c, "lbicond") ? g.call(null, cljs.core.PersistentVector.fromArray(["land", cljs.core.PersistentVector.fromArray(["lcond", cljs.core.second.call(null, b), logifier.third.call(null, b)], !0), cljs.core.PersistentVector.fromArray(["lcond", logifier.third.call(null, b), cljs.core.second.call(null, b)], !0)], !0)) : cljs.core.list.call(null, 
     "ERROR: not a valid operator", b)
   }, d = function(b) {
     var d;
     d = logifier.atom_QMARK_.call(null, b);
     d = cljs.core.truth_(d) ? d : cljs.core.first.call(null, b);
-    return cljs.core.truth_(logifier.atom_QMARK_.call(null, b)) ? cljs.core.vector.call(null, "lnot", b) : cljs.core._EQ_.call(null, d, "lnot") ? clean_up.call(null, logifier.frest.call(null, b)) : cljs.core._EQ_.call(null, d, "lor") ? c.call(null, cljs.core.PersistentVector.fromArray(["land", cljs.core.PersistentVector.fromArray(["lnot", logifier.frest.call(null, b)], !0), cljs.core.PersistentVector.fromArray(["lnot", logifier.frerest.call(null, b)], !0)], !0)) : cljs.core._EQ_.call(null, d, "land") ? 
-    c.call(null, cljs.core.PersistentVector.fromArray(["lor", cljs.core.PersistentVector.fromArray(["lnot", logifier.frest.call(null, b)], !0), cljs.core.PersistentVector.fromArray(["lnot", logifier.frerest.call(null, b)], !0)], !0)) : cljs.core._EQ_.call(null, d, "lcond") ? c.call(null, cljs.core.PersistentVector.fromArray(["land", logifier.frest.call(null, b), cljs.core.PersistentVector.fromArray(["lnot", logifier.frerest.call(null, b)], !0)], !0)) : cljs.core._EQ_.call(null, d, "lbicond") ? c.call(null, 
-    cljs.core.PersistentVector.fromArray(["lor", cljs.core.PersistentVector.fromArray(["lnot", cljs.core.PersistentVector.fromArray(["lcond", logifier.frest.call(null, b), logifier.frerest.call(null, b)], !0)], !0), cljs.core.PersistentVector.fromArray(["lnot", cljs.core.PersistentVector.fromArray(["lcond", logifier.frerest.call(null, b), logifier.frest.call(null, b)], !0)], !0)], !0)) : cljs.core.list.call(null, "decomp-lnot ERROR", b)
+    return cljs.core.truth_(logifier.atom_QMARK_.call(null, b)) ? cljs.core.vector.call(null, "lnot", b) : cljs.core._EQ_.call(null, d, "lnot") ? clean_up.call(null, cljs.core.second.call(null, b)) : cljs.core._EQ_.call(null, d, "lor") ? c.call(null, cljs.core.PersistentVector.fromArray(["land", cljs.core.PersistentVector.fromArray(["lnot", cljs.core.second.call(null, b)], !0), cljs.core.PersistentVector.fromArray(["lnot", logifier.third.call(null, b)], !0)], !0)) : cljs.core._EQ_.call(null, d, "land") ? 
+    c.call(null, cljs.core.PersistentVector.fromArray(["lor", cljs.core.PersistentVector.fromArray(["lnot", cljs.core.second.call(null, b)], !0), cljs.core.PersistentVector.fromArray(["lnot", logifier.third.call(null, b)], !0)], !0)) : cljs.core._EQ_.call(null, d, "lcond") ? c.call(null, cljs.core.PersistentVector.fromArray(["land", cljs.core.second.call(null, b), cljs.core.PersistentVector.fromArray(["lnot", logifier.third.call(null, b)], !0)], !0)) : cljs.core._EQ_.call(null, d, "lbicond") ? c.call(null, 
+    cljs.core.PersistentVector.fromArray(["lor", cljs.core.PersistentVector.fromArray(["lnot", cljs.core.PersistentVector.fromArray(["lcond", cljs.core.second.call(null, b), logifier.third.call(null, b)], !0)], !0), cljs.core.PersistentVector.fromArray(["lnot", cljs.core.PersistentVector.fromArray(["lcond", logifier.third.call(null, b), cljs.core.second.call(null, b)], !0)], !0)], !0)) : cljs.core.list.call(null, "decomp-lnot ERROR", b)
   }, e = function(b) {
-    return cljs.core.vector.call(null, "lor", clean_up.call(null, logifier.before.call(null, cljs.core.first.call(null, b), logifier.frest.call(null, b))), clean_up.call(null, logifier.after.call(null, cljs.core.first.call(null, b), logifier.frest.call(null, b))))
+    return cljs.core.vector.call(null, "lor", clean_up.call(null, logifier.before.call(null, cljs.core.first.call(null, b), cljs.core.second.call(null, b))), clean_up.call(null, logifier.after.call(null, cljs.core.first.call(null, b), cljs.core.second.call(null, b))))
   };
   return cljs.core.truth_(logifier.atom_QMARK_.call(null, b)) ? b : c.call(null, b)
 };
@@ -13021,10 +13016,10 @@ logifier.prefixer = function prefixer(b) {
     return b
   }
   if(cljs.core._EQ_.call(null, cljs.core.count.call(null, b), 1)) {
-    return cljs.core.vector.call(null, "lnot", prefixer.call(null, logifier.frest.call(null, cljs.core.first.call(null, b))))
+    return cljs.core.vector.call(null, "lnot", prefixer.call(null, cljs.core.second.call(null, cljs.core.first.call(null, b))))
   }
   if(cljs.core._EQ_.call(null, cljs.core.count.call(null, b), 2)) {
-    return cljs.core.vector.call(null, "lnot", prefixer.call(null, logifier.frest.call(null, b)))
+    return cljs.core.vector.call(null, "lnot", prefixer.call(null, cljs.core.second.call(null, b)))
   }
   if(cljs.core._EQ_.call(null, cljs.core.count.call(null, b), 3)) {
     var c = cljs.core.nth.call(null, b, 0, null), d = cljs.core.nth.call(null, b, 1, null), b = cljs.core.nth.call(null, b, 2, null);
@@ -13133,23 +13128,23 @@ logifier.sheffer_not = function(a) {
   return cljs.core.vector.call(null, "|", cljs.core.first.call(null, a), cljs.core.first.call(null, a))
 };
 logifier.sheffer_or = function(a) {
-  var b = logifier.frest.call(null, a), c = logifier.frerest.call(null, a), a = logifier.before.call(null, b, c), b = logifier.after.call(null, b, c);
+  var b = cljs.core.second.call(null, a), c = logifier.third.call(null, a), a = logifier.before.call(null, b, c), b = logifier.after.call(null, b, c);
   return cljs.core.vector.call(null, "|", cljs.core.vector.call(null, "|", a, a), cljs.core.vector.call(null, "|", b, b))
 };
 logifier.sheffer_and = function(a) {
-  var b = logifier.frest.call(null, a), c = logifier.frerest.call(null, a), a = logifier.before.call(null, b, c), b = logifier.after.call(null, b, c);
+  var b = cljs.core.second.call(null, a), c = logifier.third.call(null, a), a = logifier.before.call(null, b, c), b = logifier.after.call(null, b, c);
   return cljs.core.vector.call(null, "|", cljs.core.vector.call(null, "|", a, b), cljs.core.vector.call(null, "|", a, b))
 };
 logifier.sheffer_cond = function(a) {
-  var b = cljs.core.vector.call(null, "lnot", logifier.frest.call(null, a)), a = logifier.frerest.call(null, a);
+  var b = cljs.core.vector.call(null, "lnot", cljs.core.second.call(null, a)), a = logifier.third.call(null, a);
   return logifier.sheffer_or.call(null, cljs.core.vector.call(null, "lor", b, a))
 };
 logifier.shefferize = function(a) {
   logifier.simple_QMARK_.call(null, cljs.core.first.call(null, a));
   logifier.sheffer_atom.call(null, a);
   var b = cljs.core.first.call(null, a);
-  return cljs.core._EQ_.call(null, b, "lnot") ? logifier.sheffer_not.call(null, a) : cljs.core._EQ_.call(null, b, "lor") ? logifier.sheffer_or.call(null, a) : cljs.core._EQ_.call(null, b, "land") ? logifier.sheffer_and.call(null, a) : cljs.core._EQ_.call(null, b, "lcond") ? logifier.sheffer_cond.call(null, a) : cljs.core._EQ_.call(null, b, "lbicond") ? logifier.sheffer_and.call(null, cljs.core.vector.call(null, "land", logifier.sheffer_cond.call(null, cljs.core.vector.call(null, "lcond", logifier.frest.call(null, 
-  a), logifier.frerest.call(null, a))), logifier.sheffer_cond.call(null, cljs.core.vector.call(null, "lcond", logifier.frerest.call(null, a), logifier.frest.call(null, a))))) : null
+  return cljs.core._EQ_.call(null, b, "lnot") ? logifier.sheffer_not.call(null, a) : cljs.core._EQ_.call(null, b, "lor") ? logifier.sheffer_or.call(null, a) : cljs.core._EQ_.call(null, b, "land") ? logifier.sheffer_and.call(null, a) : cljs.core._EQ_.call(null, b, "lcond") ? logifier.sheffer_cond.call(null, a) : cljs.core._EQ_.call(null, b, "lbicond") ? logifier.sheffer_and.call(null, cljs.core.vector.call(null, "land", logifier.sheffer_cond.call(null, cljs.core.vector.call(null, "lcond", cljs.core.second.call(null, 
+  a), logifier.third.call(null, a))), logifier.sheffer_cond.call(null, cljs.core.vector.call(null, "lcond", logifier.third.call(null, a), cljs.core.second.call(null, a))))) : null
 };
 logifier.binary_operator_QMARK_ = function(a) {
   return cljs.core._EQ_.call(null, a, null) ? !1 : cljs.core.boolean$.call(null, cljs.core.re_find.call(null, /[><&v]/, a))
@@ -13234,10 +13229,6 @@ logifier.reformat_prop = function reformat_prop(b) {
       }
     }
   }
-};
-logifier.ready_to_assert = function(a) {
-  a = logifier.reformat_prop.call(null, a);
-  return cljs.core._EQ_.call(null, logifier.str_length.call(null, a), 1) ? a : cljs.core._EQ_.call(null, cljs.core.first.call(null, a), "~") ? a : logifier.joincat.call(null, "(", a, ")")
 };
 logifier.valid_input_QMARK_ = function valid_input_QMARK_(b) {
   for(var c = b;;) {
@@ -13324,14 +13315,14 @@ logifier.tautology_QMARK_ = function(a) {
   if(cljs.core.truth_(logifier.atom_QMARK_.call(null, a))) {
     return!1
   }
-  var b = logifier.clean_up.call(null, a), a = logifier.frest.call(null, b), c = logifier.frerest.call(null, b);
+  var b = logifier.clean_up.call(null, a), a = cljs.core.second.call(null, b), c = logifier.third.call(null, b);
   return cljs.core._EQ_.call(null, cljs.core.first.call(null, b), "lor") ? (b = cljs.core._EQ_.call(null, logifier.negate.call(null, a), c)) ? b : cljs.core._EQ_.call(null, logifier.negate.call(null, c), a) : !1
 };
 logifier.contradiction_QMARK_ = function(a) {
   if(cljs.core.truth_(logifier.atom_QMARK_.call(null, a))) {
     return!1
   }
-  var b = logifier.clean_up.call(null, a), a = logifier.frest.call(null, b), c = logifier.frerest.call(null, b);
+  var b = logifier.clean_up.call(null, a), a = cljs.core.second.call(null, b), c = logifier.third.call(null, b);
   return cljs.core._EQ_.call(null, cljs.core.first.call(null, b), "land") ? (b = cljs.core._EQ_.call(null, logifier.negate.call(null, a), c)) ? b : cljs.core._EQ_.call(null, logifier.negate.call(null, c), a) : !1
 };
 logifier.distribute_QMARK_ = function(a, b) {
@@ -13339,8 +13330,8 @@ logifier.distribute_QMARK_ = function(a, b) {
     var c = logifier.land_QMARK_.call(null, a);
     return cljs.core.truth_(c) ? logifier.land_QMARK_.call(null, b) : c
   }())) {
-    var c = cljs.core._EQ_.call(null, logifier.frest.call(null, a), logifier.frest.call(null, b));
-    return c || (c = cljs.core._EQ_.call(null, logifier.frest.call(null, a), logifier.frerest.call(null, b))) ? c : (c = cljs.core._EQ_.call(null, logifier.frerest.call(null, a), logifier.frest.call(null, b))) ? c : cljs.core._EQ_.call(null, logifier.frerest.call(null, a), logifier.frerest.call(null, b))
+    var c = cljs.core._EQ_.call(null, cljs.core.second.call(null, a), cljs.core.second.call(null, b));
+    return c || (c = cljs.core._EQ_.call(null, cljs.core.second.call(null, a), logifier.third.call(null, b))) ? c : (c = cljs.core._EQ_.call(null, logifier.third.call(null, a), cljs.core.second.call(null, b))) ? c : cljs.core._EQ_.call(null, logifier.third.call(null, a), logifier.third.call(null, b))
   }
   return null
 };
@@ -13348,16 +13339,16 @@ logifier.distributed = function(a, b) {
   return cljs.core.truth_(function() {
     var c = logifier.land_QMARK_.call(null, a);
     return cljs.core.truth_(c) ? logifier.land_QMARK_.call(null, b) : c
-  }()) ? cljs.core._EQ_.call(null, logifier.frest.call(null, a), logifier.frest.call(null, b)) ? cljs.core.vector.call(null, "land", logifier.frest.call(null, a), cljs.core.vector.call(null, "lor", logifier.before.call(null, logifier.frerest.call(null, a), logifier.frerest.call(null, b)), logifier.after.call(null, logifier.frerest.call(null, a), logifier.frerest.call(null, b)))) : cljs.core._EQ_.call(null, logifier.frest.call(null, a), logifier.frerest.call(null, b)) ? cljs.core.vector.call(null, 
-  "land", logifier.frest.call(null, a), cljs.core.vector.call(null, "lor", logifier.before.call(null, logifier.frerest.call(null, a), logifier.frest.call(null, b)), logifier.after.call(null, logifier.frerest.call(null, a), logifier.frest.call(null, b)))) : cljs.core._EQ_.call(null, logifier.frerest.call(null, a), logifier.frest.call(null, b)) ? cljs.core.vector.call(null, "land", logifier.frerest.call(null, a), cljs.core.vector.call(null, "lor", logifier.before.call(null, logifier.frest.call(null, 
-  a), logifier.frerest.call(null, b)), logifier.after.call(null, logifier.frest.call(null, a), logifier.frerest.call(null, b)))) : cljs.core._EQ_.call(null, logifier.frerest.call(null, a), logifier.frerest.call(null, b)) ? cljs.core.vector.call(null, "land", logifier.frerest.call(null, a), cljs.core.vector.call(null, "lor", logifier.before.call(null, logifier.frest.call(null, a), logifier.frest.call(null, b)), logifier.after.call(null, logifier.frest.call(null, a), logifier.frest.call(null, b)))) : 
-  cljs.core.vector.call(null, "lor", a, b) : null
+  }()) ? cljs.core._EQ_.call(null, cljs.core.second.call(null, a), cljs.core.second.call(null, b)) ? cljs.core.vector.call(null, "land", cljs.core.second.call(null, a), cljs.core.vector.call(null, "lor", logifier.before.call(null, logifier.third.call(null, a), logifier.third.call(null, b)), logifier.after.call(null, logifier.third.call(null, a), logifier.third.call(null, b)))) : cljs.core._EQ_.call(null, cljs.core.second.call(null, a), logifier.third.call(null, b)) ? cljs.core.vector.call(null, "land", 
+  cljs.core.second.call(null, a), cljs.core.vector.call(null, "lor", logifier.before.call(null, logifier.third.call(null, a), cljs.core.second.call(null, b)), logifier.after.call(null, logifier.third.call(null, a), cljs.core.second.call(null, b)))) : cljs.core._EQ_.call(null, logifier.third.call(null, a), cljs.core.second.call(null, b)) ? cljs.core.vector.call(null, "land", logifier.third.call(null, a), cljs.core.vector.call(null, "lor", logifier.before.call(null, cljs.core.second.call(null, a), 
+  logifier.third.call(null, b)), logifier.after.call(null, cljs.core.second.call(null, a), logifier.third.call(null, b)))) : cljs.core._EQ_.call(null, logifier.third.call(null, a), logifier.third.call(null, b)) ? cljs.core.vector.call(null, "land", logifier.third.call(null, a), cljs.core.vector.call(null, "lor", logifier.before.call(null, cljs.core.second.call(null, a), cljs.core.second.call(null, b)), logifier.after.call(null, cljs.core.second.call(null, a), cljs.core.second.call(null, b)))) : cljs.core.vector.call(null, 
+  "lor", a, b) : null
 };
 logifier.evaluate = function evaluate(b, c) {
   var d = logifier.clean_up.call(null, b), e = function(b) {
     var c = cljs.core.first.call(null, b);
-    return cljs.core._EQ_.call(null, c, "lnot") ? g.call(null, logifier.frest.call(null, b)) : cljs.core._EQ_.call(null, c, "lor") ? h.call(null, cljs.core.rest.call(null, b)) : cljs.core._EQ_.call(null, c, "land") ? i.call(null, cljs.core.rest.call(null, b)) : cljs.core._EQ_.call(null, c, "lcond") ? j.call(null, cljs.core.rest.call(null, b)) : cljs.core._EQ_.call(null, c, "lbicond") ? i.call(null, cljs.core.PersistentVector.fromArray([cljs.core.PersistentVector.fromArray(["lcond", logifier.frest.call(null, 
-    b), logifier.frerest.call(null, b)], !0), cljs.core.PersistentVector.fromArray(["lcond", logifier.frerest.call(null, b), logifier.frest.call(null, b)], !0)], !0)) : cljs.core.list.call(null, "ERROR: Invalid operator", b)
+    return cljs.core._EQ_.call(null, c, "lnot") ? g.call(null, cljs.core.second.call(null, b)) : cljs.core._EQ_.call(null, c, "lor") ? h.call(null, cljs.core.rest.call(null, b)) : cljs.core._EQ_.call(null, c, "land") ? i.call(null, cljs.core.rest.call(null, b)) : cljs.core._EQ_.call(null, c, "lcond") ? j.call(null, cljs.core.rest.call(null, b)) : cljs.core._EQ_.call(null, c, "lbicond") ? i.call(null, cljs.core.PersistentVector.fromArray([cljs.core.PersistentVector.fromArray(["lcond", cljs.core.second.call(null, 
+    b), logifier.third.call(null, b)], !0), cljs.core.PersistentVector.fromArray(["lcond", logifier.third.call(null, b), cljs.core.second.call(null, b)], !0)], !0)) : cljs.core.list.call(null, "ERROR: Invalid operator", b)
   }, f = function(b, d) {
     cljs.core.reset_BANG_.call(null, logifier.conditional_model, cljs.core.deref.call(null, c));
     logifier.affirm.call(null, logifier.negate.call(null, b), logifier.conditional_model);
@@ -13365,7 +13356,7 @@ logifier.evaluate = function evaluate(b, c) {
   }, g = function(b) {
     return cljs.core._EQ_.call(null, evaluate.call(null, b, c), "true") ? "false" : cljs.core._EQ_.call(null, evaluate.call(null, b, c), "false") ? "true" : "unknown"
   }, h = function(b) {
-    var d = cljs.core.first.call(null, b), e = logifier.frest.call(null, b);
+    var d = cljs.core.first.call(null, b), e = cljs.core.second.call(null, b);
     if(cljs.core._EQ_.call(null, evaluate.call(null, d, c), "true") || cljs.core._EQ_.call(null, evaluate.call(null, e, c), "true")) {
       return"true"
     }
@@ -13378,10 +13369,10 @@ logifier.evaluate = function evaluate(b, c) {
       return cljs.core.truth_(b) ? logifier.land_QMARK_.call(null, e) : b
     }()) ? cljs.core.truth_(logifier.distribute_QMARK_.call(null, d, e)) ? evaluate.call(null, logifier.distributed.call(null, d, e), c) : "unknown" : "unknown"
   }, i = function(b) {
-    var d = cljs.core.first.call(null, b), b = logifier.frest.call(null, b), d = evaluate.call(null, d, c);
+    var d = cljs.core.first.call(null, b), b = cljs.core.second.call(null, b), d = evaluate.call(null, d, c);
     return cljs.core._EQ_.call(null, d, "true") ? evaluate.call(null, b, c) : d
   }, j = function(b) {
-    var d = cljs.core.first.call(null, b), b = logifier.frest.call(null, b);
+    var d = cljs.core.first.call(null, b), b = cljs.core.second.call(null, b);
     return evaluate.call(null, cljs.core.vector.call(null, "lor", cljs.core.vector.call(null, "lnot", d), b), c)
   };
   return cljs.core.truth_(logifier.tautology_QMARK_.call(null, d)) ? "true" : cljs.core.truth_(logifier.contradiction_QMARK_.call(null, d)) ? "false" : cljs.core.truth_(logifier.atom_QMARK_.call(null, d)) ? logifier.find_value.call(null, d, c) : e.call(null, d)
@@ -13430,12 +13421,10 @@ logifier.affirm = function affirm(b, c) {
     return cljs.core.not.call(null, logifier.has_name_QMARK_.call(null, logifier.clean_up.call(null, b), c)) ? affirm.call(null, b, c) : null
   }, g = function(b) {
     var d = cljs.core.first.call(null, b);
-    return cljs.core._EQ_.call(null, d, "lnot") ? e.call(null, logifier.frest.call(null, b), "false", c) : cljs.core._EQ_.call(null, d, "lor") ? h.call(null, cljs.core.vector.call(null, logifier.frest.call(null, b), logifier.frerest.call(null, b))) : cljs.core._EQ_.call(null, d, "land") ? (affirm.call(null, logifier.frest.call(null, b), c), affirm.call(null, logifier.frerest.call(null, b), c)) : cljs.core.list.call(null, "ERROR: not a valid operator", b)
+    return cljs.core._EQ_.call(null, d, "lnot") ? e.call(null, cljs.core.second.call(null, b), "false", c) : cljs.core._EQ_.call(null, d, "lor") ? h.call(null, cljs.core.vector.call(null, cljs.core.second.call(null, b), logifier.third.call(null, b))) : cljs.core._EQ_.call(null, d, "land") ? (affirm.call(null, cljs.core.second.call(null, b), c), affirm.call(null, logifier.third.call(null, b), c)) : cljs.core.list.call(null, "ERROR: not a valid operator", b)
   }, h = function(b) {
-    var d = logifier.before.call(null, cljs.core.first.call(null, b), logifier.frest.call(null, b)), g = logifier.after.call(null, cljs.core.first.call(null, b), logifier.frest.call(null, b));
-    logifier.report.call(null, cljs.core.apply.call(null, cljs.core.str, "Test: ", b));
-    logifier.report.call(null, cljs.core.apply.call(null, cljs.core.str, cljs.core.meta.call(null, c)));
-    cljs.core._EQ_.call(null, logifier.evaluate.call(null, cljs.core.first.call(null, b), c), "false") ? affirm.call(null, logifier.frest.call(null, b), c) : cljs.core._EQ_.call(null, logifier.evaluate.call(null, logifier.frest.call(null, b), c), "false") ? affirm.call(null, cljs.core.first.call(null, b), c) : cljs.core._EQ_.call(null, d, g) ? affirm.call(null, d, c) : cljs.core.truth_(function() {
+    var d = logifier.before.call(null, cljs.core.first.call(null, b), cljs.core.second.call(null, b)), g = logifier.after.call(null, cljs.core.first.call(null, b), cljs.core.second.call(null, b));
+    cljs.core._EQ_.call(null, logifier.evaluate.call(null, cljs.core.first.call(null, b), c), "false") ? affirm.call(null, cljs.core.second.call(null, b), c) : cljs.core._EQ_.call(null, logifier.evaluate.call(null, cljs.core.second.call(null, b), c), "false") ? affirm.call(null, cljs.core.first.call(null, b), c) : cljs.core._EQ_.call(null, d, g) ? affirm.call(null, d, c) : cljs.core.truth_(function() {
       var b = logifier.land_QMARK_.call(null, d);
       return cljs.core.truth_(b) ? logifier.land_QMARK_.call(null, g) : b
     }()) ? cljs.core.truth_(logifier.distribute_QMARK_.call(null, d, g)) ? affirm.call(null, logifier.distributed.call(null, d, g), c) : e.call(null, cljs.core.vector.call(null, "lor", d, g), "true", c) : e.call(null, cljs.core.vector.call(null, "lor", d, g), "true", c);
@@ -13445,7 +13434,7 @@ logifier.affirm = function affirm(b, c) {
         (function() {
           return function(b) {
             if(cljs.core.not.call(null, logifier.simple_QMARK_.call(null, b)) && cljs.core._EQ_.call(null, cljs.core.first.call(null, b), "lor")) {
-              var c = logifier.frest.call(null, b), e = logifier.frerest.call(null, b);
+              var c = cljs.core.second.call(null, b), e = logifier.third.call(null, b);
               return cljs.core.truth_(logifier.converse_QMARK_.call(null, b, cljs.core.vector.call(null, "lor", d, g))) ? f.call(null, cljs.core.vector.call(null, "lor", cljs.core.vector.call(null, "land", logifier.negate.call(null, d), g), cljs.core.vector.call(null, "land", d, logifier.negate.call(null, g)))) : cljs.core._EQ_.call(null, c, logifier.negate.call(null, d)) ? f.call(null, cljs.core.vector.call(null, "lor", g, e)) : cljs.core._EQ_.call(null, e, logifier.negate.call(null, d)) ? f.call(null, 
               cljs.core.vector.call(null, "lor", g, c)) : cljs.core._EQ_.call(null, c, logifier.negate.call(null, g)) ? f.call(null, cljs.core.vector.call(null, "lor", d, e)) : cljs.core._EQ_.call(null, e, logifier.negate.call(null, g)) ? f.call(null, cljs.core.vector.call(null, "lor", d, c)) : null
             }
@@ -13460,7 +13449,7 @@ logifier.affirm = function affirm(b, c) {
           cljs.core.chunked_seq_QMARK_.call(null, q) ? (b = cljs.core.chunk_first.call(null, q), k = cljs.core.chunk_rest.call(null, q), h = b, q = cljs.core.count.call(null, b), b = k, k = q) : (p = cljs.core.first.call(null, q), function() {
             return function(b) {
               if(cljs.core.not.call(null, logifier.simple_QMARK_.call(null, b)) && cljs.core._EQ_.call(null, cljs.core.first.call(null, b), "lor")) {
-                var c = logifier.frest.call(null, b), e = logifier.frerest.call(null, b);
+                var c = cljs.core.second.call(null, b), e = logifier.third.call(null, b);
                 return cljs.core.truth_(logifier.converse_QMARK_.call(null, b, cljs.core.vector.call(null, "lor", d, g))) ? f.call(null, cljs.core.vector.call(null, "lor", cljs.core.vector.call(null, "land", logifier.negate.call(null, d), g), cljs.core.vector.call(null, "land", d, logifier.negate.call(null, g)))) : cljs.core._EQ_.call(null, c, logifier.negate.call(null, d)) ? f.call(null, cljs.core.vector.call(null, "lor", g, e)) : cljs.core._EQ_.call(null, e, logifier.negate.call(null, d)) ? f.call(null, 
                 cljs.core.vector.call(null, "lor", g, c)) : cljs.core._EQ_.call(null, c, logifier.negate.call(null, g)) ? f.call(null, cljs.core.vector.call(null, "lor", d, e)) : cljs.core._EQ_.call(null, e, logifier.negate.call(null, g)) ? f.call(null, cljs.core.vector.call(null, "lor", d, c)) : null
               }
@@ -13482,11 +13471,11 @@ logifier.affirm = function affirm(b, c) {
     d = (d = cljs.core.not.call(null, logifier.atom_QMARK_.call(null, b))) ? cljs.core._EQ_.call(null, cljs.core.first.call(null, b), "land") : d;
     if(d) {
       cljs.core.reset_BANG_.call(null, logifier.test_model, cljs.core.deref.call(null, c));
-      if(cljs.core._EQ_.call(null, logifier.evaluate.call(null, logifier.frest.call(null, b), logifier.test_model), "false")) {
+      if(cljs.core._EQ_.call(null, logifier.evaluate.call(null, cljs.core.second.call(null, b), logifier.test_model), "false")) {
         return!0
       }
-      affirm.call(null, logifier.frest.call(null, b), logifier.test_model);
-      return cljs.core._EQ_.call(null, logifier.evaluate.call(null, logifier.frerest.call(null, b), logifier.test_model), "false")
+      affirm.call(null, cljs.core.second.call(null, b), logifier.test_model);
+      return cljs.core._EQ_.call(null, logifier.evaluate.call(null, logifier.third.call(null, b), logifier.test_model), "false")
     }
     return!1
   }.call(null, d)) ? "inconsistent" : cljs.core.truth_(logifier.atom_QMARK_.call(null, d)) ? e.call(null, d, "true", c) : g.call(null, d)
@@ -13512,31 +13501,6 @@ logifier.recalculate = function(a) {
     b = cljs.core.deref.call(null, a)
   }
 };
-logifier.reveal = function(a) {
-  return cljs.core.deref.call(null, a)
-};
-logifier.valid_QMARK_ = function(a, b) {
-  logifier.clear_model.call(null, logifier.test_model);
-  for(var c = cljs.core.seq.call(null, b), d = null, e = 0, f = 0;;) {
-    if(f < e) {
-      var g = cljs.core._nth.call(null, d, f);
-      logifier.affirm.call(null, g, logifier.test_model);
-      f += 1
-    }else {
-      if(c = cljs.core.seq.call(null, c)) {
-        d = c, cljs.core.chunked_seq_QMARK_.call(null, d) ? (c = cljs.core.chunk_first.call(null, d), f = cljs.core.chunk_rest.call(null, d), d = c, e = cljs.core.count.call(null, c), c = f) : (c = cljs.core.first.call(null, d), logifier.affirm.call(null, c, logifier.test_model), c = cljs.core.next.call(null, d), d = null, e = 0), f = 0
-      }else {
-        break
-      }
-    }
-  }
-  return cljs.core._EQ_.call(null, logifier.evaluate.call(null, a, logifier.test_model), "true") ? !0 : !1
-};
-logifier.sound_QMARK_ = function(a, b, c) {
-  return cljs.core.truth_(logifier.valid_QMARK_.call(null, a, b)) ? cljs.core.every_QMARK_.call(null, function(a) {
-    return cljs.core._EQ_.call(null, logifier.evaluate.call(null, a, c), "true")
-  }, b) ? !0 : !1 : !1
-};
 logifier.list_states = function() {
   var a = cljs.core.filter.call(null, logifier.simple_QMARK_, logifier.list_names.call(null, logifier.model)), b = cljs.core.map.call(null, cljs.core.str, cljs.core.filter.call(null, function(a) {
     return cljs.core._EQ_.call(null, logifier.evaluate.call(null, a, logifier.model), "true")
@@ -13548,6 +13512,10 @@ logifier.list_states = function() {
 logifier.reset_assertions = function() {
   logifier.clear_model.call(null, logifier.model);
   return logifier.clear_model.call(null, logifier.assertions)
+};
+logifier.ready_to_assert = function(a) {
+  a = logifier.reformat_prop.call(null, a);
+  return cljs.core._EQ_.call(null, logifier.str_length.call(null, a), 1) ? a : cljs.core._EQ_.call(null, cljs.core.first.call(null, a), "~") ? a : logifier.joincat.call(null, "(", a, ")")
 };
 logifier.asserted_QMARK_ = function(a) {
   var b = logifier.ready_to_assert.call(null, a);
@@ -13616,26 +13584,26 @@ logifier.print_output = function() {
   return cljs.core.deref.call(null, logifier.current_output)
 };
 if(!cljs.core._EQ_.call(null, cljs.core.type.call(null, cljs.core.PersistentVector.fromArray(["p"], !0)), cljs.core.PersistentVector)) {
-  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "type", "type", -1636955917, null), cljs.core.vec(["p"])), cljs.core.hash_map("\ufdd0:line", 750, "\ufdd0:column", 12)), new cljs.core.Symbol(null, "cljs.core.PersistentVector", "cljs.core.PersistentVector", -65585786, null)), cljs.core.hash_map("\ufdd0:line", 
-  750, "\ufdd0:column", 9))))].join(""));
+  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "type", "type", -1636955917, null), cljs.core.vec(["p"])), cljs.core.hash_map("\ufdd0:line", 717, "\ufdd0:column", 12)), new cljs.core.Symbol(null, "cljs.core.PersistentVector", "cljs.core.PersistentVector", -65585786, null)), cljs.core.hash_map("\ufdd0:line", 
+  717, "\ufdd0:column", 9))))].join(""));
 }
 if(!cljs.core.truth_(logifier.wff_QMARK_.call(null, cljs.core.PersistentVector.fromArray(["lnot", "x"], !0)))) {
-  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "wff?", "wff?", -1636885151, null), cljs.core.vec(["lnot", "x"])), cljs.core.hash_map("\ufdd0:line", 752, "\ufdd0:column", 9))))].join(""));
+  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "wff?", "wff?", -1636885151, null), cljs.core.vec(["lnot", "x"])), cljs.core.hash_map("\ufdd0:line", 719, "\ufdd0:column", 9))))].join(""));
 }
 if(!cljs.core._EQ_.call(null, logifier.clean_parse.call(null, "p v y"), cljs.core.PersistentVector.fromArray(["p", "lor", "y"], !0))) {
-  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "clean-parse", "clean-parse", 721798120, null), "p v y"), cljs.core.hash_map("\ufdd0:line", 754, "\ufdd0:column", 12)), cljs.core.vec(["p", "lor", "y"])), cljs.core.hash_map("\ufdd0:line", 754, "\ufdd0:column", 9))))].join(""));
+  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "clean-parse", "clean-parse", 721798120, null), "p v y"), cljs.core.hash_map("\ufdd0:line", 721, "\ufdd0:column", 12)), cljs.core.vec(["p", "lor", "y"])), cljs.core.hash_map("\ufdd0:line", 721, "\ufdd0:column", 9))))].join(""));
 }
 if(!cljs.core._EQ_.call(null, logifier.reformat_prop.call(null, "pvy"), "p v y")) {
-  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "reformat-prop", "reformat-prop", 836029727, null), "pvy"), cljs.core.hash_map("\ufdd0:line", 756, "\ufdd0:column", 12)), "p v y"), cljs.core.hash_map("\ufdd0:line", 756, "\ufdd0:column", 9))))].join(""));
+  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "reformat-prop", "reformat-prop", 836029727, null), "pvy"), cljs.core.hash_map("\ufdd0:line", 723, "\ufdd0:column", 12)), "p v y"), cljs.core.hash_map("\ufdd0:line", 723, "\ufdd0:column", 9))))].join(""));
 }
 if(!cljs.core.truth_(logifier.valid_input_QMARK_.call(null, "p v y"))) {
-  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "valid-input?", "valid-input?", 229392991, null), "p v y"), cljs.core.hash_map("\ufdd0:line", 758, "\ufdd0:column", 9))))].join(""));
+  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "valid-input?", "valid-input?", 229392991, null), "p v y"), cljs.core.hash_map("\ufdd0:line", 725, "\ufdd0:column", 9))))].join(""));
 }
 if(!cljs.core._EQ_.call(null, logifier.nest_parse.call(null, "p v y"), cljs.core.PersistentVector.fromArray(["p", "lor", "y"], !0))) {
-  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "nest-parse", "nest-parse", 174198967, null), "p v y"), cljs.core.hash_map("\ufdd0:line", 760, "\ufdd0:column", 12)), cljs.core.vec(["p", "lor", "y"])), cljs.core.hash_map("\ufdd0:line", 760, "\ufdd0:column", 9))))].join(""));
+  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "nest-parse", "nest-parse", 174198967, null), "p v y"), cljs.core.hash_map("\ufdd0:line", 727, "\ufdd0:column", 12)), cljs.core.vec(["p", "lor", "y"])), cljs.core.hash_map("\ufdd0:line", 727, "\ufdd0:column", 9))))].join(""));
 }
 if(!cljs.core._EQ_.call(null, logifier.prefixer.call(null, cljs.core.PersistentVector.fromArray(["p", "lor", "y"], !0)), cljs.core.PersistentVector.fromArray(["lor", "p", "y"], !0))) {
-  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "prefixer", "prefixer", 1365892216, null), cljs.core.vec(["p", "lor", "y"])), cljs.core.hash_map("\ufdd0:line", 762, "\ufdd0:column", 12)), cljs.core.vec(["lor", "p", "y"])), cljs.core.hash_map("\ufdd0:line", 762, "\ufdd0:column", 9))))].join(""));
+  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "prefixer", "prefixer", 1365892216, null), cljs.core.vec(["p", "lor", "y"])), cljs.core.hash_map("\ufdd0:line", 729, "\ufdd0:column", 12)), cljs.core.vec(["lor", "p", "y"])), cljs.core.hash_map("\ufdd0:line", 729, "\ufdd0:column", 9))))].join(""));
 }
 ;cljs.reader = {};
 cljs.reader.PushbackReader = {};
