@@ -50,7 +50,7 @@
 
 (defn get-value [name this-model]
   "Get the truth-value ('true'/'false') of a statement letter.  Return nil if it's not in model."
-  (:value (first (filter #(= (:name %) name) (deref this-model)))))
+  (:value (first (filter #(= (:name %) name) @this-model))))
 
 (defn find-value [name this-model]
   "Get the truth-value ('true'/'false'/'unknown') of a statement letter."
@@ -65,11 +65,11 @@
     (vector "lnot" name)))
 
 (defn list-names [this-model]
-  (map  #(get % :name) (deref this-model)))
+  (map  #(get % :name) @this-model))
 
 (defn list-props [this-model]
   "List all known propositions."
-  (map #(get-correct-prop % this-model) (map #(get % :name) (deref this-model))))
+  (map #(get-correct-prop % this-model) (map #(get % :name) @this-model)))
 
 (defn has-name? [name this-model]
   (if (filter #(= % name) (list-names this-model)) (list name) 
@@ -487,10 +487,9 @@
                                     (= operate "lbicond") (land
                                                             [["lcond" (second prop) (third prop)]
                                                              ["lcond" (third prop) (second prop)]])
-                                    :else (list "ERROR: Invalid operator" prop)
-                                    )))
+                                    :else (list "ERROR: Invalid operator" prop))))
             (cond-proof? [one two] ;No longer clearing model
-                         (reset! conditional-model (deref this-model))
+                         (reset! conditional-model @this-model)
                          (affirm (negate one) conditional-model)
                          (if (= (evaluate two conditional-model) "true") true false))
             (lnot [prop]
@@ -565,7 +564,7 @@
 ;Be sure to always clean-up initial props before affirming them!
 (defn affirm [prop this-model]
   "Add a proposition to this-model.  First, recursively reduce the proposition to
-  sentence letters and disjunctions."
+  sentence letters or disjunctions."
   (let [prop (clean-up prop)]
     (letfn [(inconsistent? [prop]
                            (cond
@@ -573,7 +572,7 @@
                              (contradiction? prop) true
                              (and (not (atom? prop)) (= (first prop) "land"))
                              (do
-                               (reset! test-model (deref this-model))
+                               (reset! test-model @this-model)
                                (if (= (evaluate (second prop) test-model) "false") true
                                  (do
                                    (affirm (second prop) test-model)
@@ -581,10 +580,10 @@
                              :else false))
             (insert-prop [prop value this-model]
                          (letfn [(recalc []
-                                         (loop [initial-state (deref this-model)]
+                                         (loop [initial-state @this-model]
                                            (do
                                              (doseq [props (list-names this-model)] (affirm props this-model))
-                                             (if-not (= initial-state (deref this-model)) (recur (deref this-model))))))]
+                                             (if-not (= initial-state @this-model) (recur @this-model)))))]
                            (if (has-name? prop this-model) "Duplicate Entry"
                              (if
                                (wff? prop) (do
@@ -630,9 +629,7 @@
                                         (= two (negate earlier)) (new-affirm (vector "lor" later one))
                                         (= one (negate later)) (new-affirm (vector "lor" earlier two))
                                         (= two (negate later)) (new-affirm (vector "lor" earlier one))
-                                        )))) props)))))
-            
-            ]
+                                        )))) props)))))]
       ;(if (reductio? prop) (affirm (negate prop) this-model)
       (if (inconsistent? prop) "inconsistent"
         (cond
@@ -640,27 +637,10 @@
           :else (decomp prop))))))
 
 (defn recalculate [this-model]
-  (loop [initial-state (deref this-model)]
+  (loop [initial-state @this-model]
     (do
       (doseq [props (list-names this-model)] (affirm props this-model))
-      (if-not (= initial-state (deref this-model)) (recur (deref this-model))))))
-
-(defn reveal [this-model]
-  (deref this-model))
-
-
-;Validity/Soundness
-(defn valid? [conclusion premises]
-  (do
-    (clear-model test-model)
-    (doseq [props premises] (affirm props test-model))
-    (if (= (evaluate conclusion test-model) "true") true false)))
-
-(defn sound? [conclusion premises this-model]
-  (do
-    (if (valid? conclusion premises)
-      (if (every? #(= (evaluate % this-model) "true") premises) true false)
-      false)))
+      (if-not (= initial-state @this-model) (recur @this-model)))))
 
 
 ;INTERFACE
@@ -668,8 +648,7 @@
   (let [states (filter simple? (list-names model))
         true-states (map str (filter #(= (evaluate % model) "true") states))
         false-states (map (partial str "~") (filter #(= (evaluate % model) "false") states))]
-    (str/join " . " (sort compare (flatten (conj true-states false-states))))
-    ))
+    (str/join " . " (sort compare (flatten (conj true-states false-states))))))
 
 (defn reset-assertions []
   (clear-model model)
@@ -684,10 +663,12 @@
 
 (defn asserted? [prop]
   (let [prop (ready-to-assert prop)]
-    (or (= (filter #(= % prop) (deref assertions)) (list prop))
-        (= (filter #(= % (joincat "(" prop ")")) (deref assertions)) (list prop)))))
+    (or (= (filter #(= % prop) @assertions) (list prop))
+        (= (filter #(= % (joincat "(" prop ")")) @assertions) (list prop)))))
 
 (defn assert-prop [prop]
+  "Assert a proposition in string (interface) format.
+  Interface format uses the following operators: ~, v, &, >, <>"
   (let [prop (reformat-prop prop)
         parsed-prop (parse-prop prop)]
     (if (wff? parsed-prop)
@@ -701,10 +682,10 @@
       (update-output (joincat "[" prop "] " "syntax error")))))
 
 (defn print-assertions []
-  (str/join " . " (into () (deref assertions))))
+  (str/join " . " (into () @assertions)))
 
 (defn reassert-props []
-  (let [temp-assertions (deref assertions)]
+  (let [temp-assertions @assertions]
     (do
       (clear-model model)
       (reset-assertions)
@@ -715,10 +696,9 @@
     (let [prop (ready-to-assert prop)]
       (do
         (reset! assertions
-                (filter #(not (= % prop)) (deref assertions)))
+                (filter #(not (= % prop)) @assertions))
         (reassert-props)
         (update-output (joincat "[" prop "] removed"))))))
-
 
 (defn check-truth [prop]
   (let [prop (reformat-prop prop)
@@ -726,7 +706,7 @@
     (if (wff? parsed-prop) (joincat "[" prop "] " (evaluate parsed-prop model))
       (joincat "[" prop "] " "syntax error"))))
 
-(defn ^:export  process-input [input]
+(defn ^:export process-input [input]
   (cond
     (= (first input) \?) (update-output (check-truth (subs input 1)))
     (= (first input) \!) (remove-assertion (subs input 1))
@@ -739,7 +719,8 @@
       (assert-prop input))))
 
 (defn print-output []
-  (deref current-output))
+  @current-output)
+
 
 ;TESTS
 ;(assert (= (type ["p"]) cljs.core.PersistentVector))

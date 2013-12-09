@@ -13482,31 +13482,6 @@ logifier.recalculate = function(a) {
     b = cljs.core.deref.call(null, a)
   }
 };
-logifier.reveal = function(a) {
-  return cljs.core.deref.call(null, a)
-};
-logifier.valid_QMARK_ = function(a, b) {
-  logifier.clear_model.call(null, logifier.test_model);
-  for(var c = cljs.core.seq.call(null, b), d = null, e = 0, f = 0;;) {
-    if(f < e) {
-      var g = cljs.core._nth.call(null, d, f);
-      logifier.affirm.call(null, g, logifier.test_model);
-      f += 1
-    }else {
-      if(c = cljs.core.seq.call(null, c)) {
-        d = c, cljs.core.chunked_seq_QMARK_.call(null, d) ? (c = cljs.core.chunk_first.call(null, d), f = cljs.core.chunk_rest.call(null, d), d = c, e = cljs.core.count.call(null, c), c = f) : (c = cljs.core.first.call(null, d), logifier.affirm.call(null, c, logifier.test_model), c = cljs.core.next.call(null, d), d = null, e = 0), f = 0
-      }else {
-        break
-      }
-    }
-  }
-  return cljs.core._EQ_.call(null, logifier.evaluate.call(null, a, logifier.test_model), "true") ? !0 : !1
-};
-logifier.sound_QMARK_ = function(a, b, c) {
-  return cljs.core.truth_(logifier.valid_QMARK_.call(null, a, b)) ? cljs.core.every_QMARK_.call(null, function(a) {
-    return cljs.core._EQ_.call(null, logifier.evaluate.call(null, a, c), "true")
-  }, b) ? !0 : !1 : !1
-};
 logifier.list_states = function() {
   var a = cljs.core.filter.call(null, logifier.simple_QMARK_, logifier.list_names.call(null, logifier.model)), b = cljs.core.map.call(null, cljs.core.str, cljs.core.filter.call(null, function(a) {
     return cljs.core._EQ_.call(null, logifier.evaluate.call(null, a, logifier.model), "true")
