@@ -244,17 +244,17 @@
   (if (= (first input) \()
       (loop [output []
             remains input
-            counter 0]
+            count 0]
         (cond
           (= (first remains) \))
-            (if (= counter 1)
+            (if (= count 1)
               (str/join output)
-              (recur (conj output \)) (subs remains 1) (- counter 1)))
+              (recur (conj output \)) (subs remains 1) (- count 1)))
           (= (first remains) \()
-             (if (= counter 0)
+             (if (= count 0)
                (recur [] (subs remains 1) 1)
-               (recur (conj output (first remains)) (subs remains 1) (+ counter 1)))
-          :else (recur (conj output (first remains)) (subs remains 1) counter)))
+               (recur (conj output (first remains)) (subs remains 1) (+ count 1)))
+          :else (recur (conj output (first remains)) (subs remains 1) count)))
       input))
 
 (defn nest-parse [input]
@@ -723,19 +723,19 @@
 
 
 ;TESTS
-;(assert (= (type ["p"]) cljs.core.PersistentVector))
+(assert (= (type ["p"]) cljs.core.PersistentVector))
 
-;(assert (wff? ["lnot" \x]))
+(assert (wff? ["lnot" \x]))
 
-;(assert (= (clean-parse "p v y") [\p "lor" \y]))
+(assert (= (clean-parse "p v y") [\p "lor" \y]))
 
-;(assert (= (reformat-prop "pvy") "p v y"))
+(assert (= (reformat-prop "pvy") "p v y"))
 
-;(assert (valid-input? "p v y"))
+(assert (valid-input? "p v y"))
 
-;(assert (= (nest-parse "p v y") [\p "lor" \y]))
+(assert (= (nest-parse "p v y") [\p "lor" \y]))
 
-;(assert (= (prefixer [\p "lor" \y]) ["lor" \p \y]))
+(assert (= (prefixer [\p "lor" \y]) ["lor" \p \y]))
 
 
         

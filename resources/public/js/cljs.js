@@ -13564,7 +13564,29 @@ goog.exportSymbol("logifier.process_input", logifier.process_input);
 logifier.print_output = function() {
   return cljs.core.deref.call(null, logifier.current_output)
 };
-cljs.reader = {};
+if(!cljs.core._EQ_.call(null, cljs.core.type.call(null, cljs.core.PersistentVector.fromArray(["p"], !0)), cljs.core.PersistentVector)) {
+  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "type", "type", -1636955917, null), cljs.core.vec(["p"])), cljs.core.hash_map("\ufdd0:line", 726, "\ufdd0:column", 12)), new cljs.core.Symbol(null, "cljs.core.PersistentVector", "cljs.core.PersistentVector", -65585786, null)), cljs.core.hash_map("\ufdd0:line", 
+  726, "\ufdd0:column", 9))))].join(""));
+}
+if(!cljs.core.truth_(logifier.wff_QMARK_.call(null, cljs.core.PersistentVector.fromArray(["lnot", "x"], !0)))) {
+  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "wff?", "wff?", -1636885151, null), cljs.core.vec(["lnot", "x"])), cljs.core.hash_map("\ufdd0:line", 728, "\ufdd0:column", 9))))].join(""));
+}
+if(!cljs.core._EQ_.call(null, logifier.clean_parse.call(null, "p v y"), cljs.core.PersistentVector.fromArray(["p", "lor", "y"], !0))) {
+  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "clean-parse", "clean-parse", 721798120, null), "p v y"), cljs.core.hash_map("\ufdd0:line", 730, "\ufdd0:column", 12)), cljs.core.vec(["p", "lor", "y"])), cljs.core.hash_map("\ufdd0:line", 730, "\ufdd0:column", 9))))].join(""));
+}
+if(!cljs.core._EQ_.call(null, logifier.reformat_prop.call(null, "pvy"), "p v y")) {
+  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "reformat-prop", "reformat-prop", 836029727, null), "pvy"), cljs.core.hash_map("\ufdd0:line", 732, "\ufdd0:column", 12)), "p v y"), cljs.core.hash_map("\ufdd0:line", 732, "\ufdd0:column", 9))))].join(""));
+}
+if(!cljs.core.truth_(logifier.valid_input_QMARK_.call(null, "p v y"))) {
+  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "valid-input?", "valid-input?", 229392991, null), "p v y"), cljs.core.hash_map("\ufdd0:line", 734, "\ufdd0:column", 9))))].join(""));
+}
+if(!cljs.core._EQ_.call(null, logifier.nest_parse.call(null, "p v y"), cljs.core.PersistentVector.fromArray(["p", "lor", "y"], !0))) {
+  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "nest-parse", "nest-parse", 174198967, null), "p v y"), cljs.core.hash_map("\ufdd0:line", 736, "\ufdd0:column", 12)), cljs.core.vec(["p", "lor", "y"])), cljs.core.hash_map("\ufdd0:line", 736, "\ufdd0:column", 9))))].join(""));
+}
+if(!cljs.core._EQ_.call(null, logifier.prefixer.call(null, cljs.core.PersistentVector.fromArray(["p", "lor", "y"], !0)), cljs.core.PersistentVector.fromArray(["lor", "p", "y"], !0))) {
+  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "prefixer", "prefixer", 1365892216, null), cljs.core.vec(["p", "lor", "y"])), cljs.core.hash_map("\ufdd0:line", 738, "\ufdd0:column", 12)), cljs.core.vec(["lor", "p", "y"])), cljs.core.hash_map("\ufdd0:line", 738, "\ufdd0:column", 9))))].join(""));
+}
+;cljs.reader = {};
 cljs.reader.PushbackReader = {};
 cljs.reader.read_char = function(a) {
   var b;
