@@ -13374,6 +13374,22 @@ logifier.evaluate = function evaluate(b, c) {
   };
   return cljs.core.truth_(logifier.tautology_QMARK_.call(null, d)) ? "true" : cljs.core.truth_(logifier.contradiction_QMARK_.call(null, d)) ? "false" : cljs.core.truth_(logifier.atom_QMARK_.call(null, d)) ? logifier.find_value.call(null, d, c) : e.call(null, d)
 };
+logifier.list_reversed_symbols = function list_reversed_symbols(b) {
+  var c;
+  c = (c = cljs.core._EQ_.call(null, cljs.core.count.call(null, b), 1)) ? cljs.core._EQ_.call(null, logifier.evaluate.call(null, cljs.core.first.call(null, b), logifier.model), "false") : c;
+  if(c) {
+    return list_reversed_symbols.call(null, cljs.core.conj.call(null, cljs.core.PersistentVector.fromArray(["lnot"], !0), b))
+  }
+  c = cljs.core.flatten.call(null, b);
+  for(var b = cljs.core.PersistentVector.EMPTY, d = 0;;) {
+    var e = cljs.core._EQ_, f = cljs.core.first.call(null, c);
+    if(e.call(null, null, f)) {
+      return clojure.string.join.call(null, cljs.core.flatten.call(null, cljs.core.conj.call(null, b, cljs.core.repeat.call(null, d, "()"))))
+    }
+    e.call(null, "lnot", f) ? (b = cljs.core.conj.call(null, b, "~"), c = cljs.core.rest.call(null, c)) : e.call(null, "lor", f) ? (b = cljs.core.conj.call(null, b, "v"), c = cljs.core.rest.call(null, c), d += 1) : e.call(null, "land", f) ? (b = cljs.core.conj.call(null, b, "&"), c = cljs.core.rest.call(null, c), d += 1) : e.call(null, "lcond", f) ? (b = cljs.core.conj.call(null, b, ">"), c = cljs.core.rest.call(null, c), d += 1) : (b = cljs.core.truth_(logifier.simple_QMARK_.call(null, cljs.core.first.call(null, 
+    c))) ? cljs.core.conj.call(null, b, "" + cljs.core.str(cljs.core.first.call(null, c))) : cljs.core.conj.call(null, b, cljs.core.first.call(null, c)), c = cljs.core.rest.call(null, c))
+  }
+};
 logifier.affirm = function affirm(b, c) {
   var d = logifier.clean_up.call(null, b), e = function(b, c, d) {
     var e = function() {
@@ -13585,6 +13601,9 @@ if(!cljs.core._EQ_.call(null, logifier.nest_parse.call(null, "p v y"), cljs.core
 }
 if(!cljs.core._EQ_.call(null, logifier.prefixer.call(null, cljs.core.PersistentVector.fromArray(["p", "lor", "y"], !0)), cljs.core.PersistentVector.fromArray(["lor", "p", "y"], !0))) {
   throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "=", "=", -1640531466, null), cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "prefixer", "prefixer", 1365892216, null), cljs.core.vec(["p", "lor", "y"])), cljs.core.hash_map("\ufdd0:line", 738, "\ufdd0:column", 12)), cljs.core.vec(["lor", "p", "y"])), cljs.core.hash_map("\ufdd0:line", 738, "\ufdd0:column", 9))))].join(""));
+}
+if(!cljs.core.truth_(logifier.evaluate.call(null, cljs.core.PersistentVector.fromArray(["lor", "p", cljs.core.PersistentVector.fromArray(["lnot", "p"], !0)], !0), logifier.model))) {
+  throw Error([cljs.core.str("Assert failed: "), cljs.core.str(cljs.core.pr_str.call(null, cljs.core.with_meta(cljs.core.list(new cljs.core.Symbol(null, "evaluate", "evaluate", -1478744494, null), cljs.core.vec(["lor", "p", cljs.core.vec(["lnot", "p"])]), new cljs.core.Symbol(null, "model", "model", -1536461598, null)), cljs.core.hash_map("\ufdd0:line", 740, "\ufdd0:column", 9))))].join(""));
 }
 ;cljs.reader = {};
 cljs.reader.PushbackReader = {};

@@ -536,7 +536,7 @@
         (atom? prop) (find-value prop this-model)
         :else (evaluate-composite prop)))))
         
-#_(defn list-reversed-symbols [input]
+(defn list-reversed-symbols [input]
   (if (and (= (count input) 1)
            (= (evaluate (first input) model) "false")) 
     (list-reversed-symbols (conj ["lnot"] input))
@@ -706,7 +706,7 @@
     (if (wff? parsed-prop) (joincat "[" prop "] " (evaluate parsed-prop model))
       (joincat "[" prop "] " "syntax error"))))
 
-(defn ^:export process-input [input]
+(defn ^:export  process-input [input]
   (cond
     (= (first input) \?) (update-output (check-truth (subs input 1)))
     (= (first input) \!) (remove-assertion (subs input 1))
@@ -737,7 +737,7 @@
 
 (assert (= (prefixer [\p "lor" \y]) ["lor" \p \y]))
 
-
+(assert (evaluate ["lor" "p" ["lnot" "p"]] model))
         
         
         
